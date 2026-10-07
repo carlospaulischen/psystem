@@ -9,6 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { decideAccessRequest } from "./actions";
+import { Button } from "@/components/ui/button";
 import type { Appointment, Charge } from "@/types";
 
 function formatTime(iso: string) {
@@ -48,6 +50,38 @@ export default async function DashboardPage() {
       .in("status", ["pending", "overdue"])
       .returns<Pick<Charge, "amount_cents" | "status">[]>(),
   ]);
+
+  // Solicitações do portal — apenas dos pacientes vinculados ao psicólogo.
+  let requests: {
+    id: string;
+    request_type: string;
+    status: string;
+    note: string | null;
+    created_at: string;
+    patient: { full_name: string } | null;
+  }[] = [];
+  if (profile.role === "psychologist") {
+    const { data: links } = await supabase
+      .from("patient_links")
+      .select("patient_id")
+      .eq("psychologist_id", profile.id)
+      .eq("status", "active");
+    const patientIds = (links ?? []).map((l) => l.patient_id);
+    if (patientIds.length > 0) {
+      const { data } = await supabase
+        .from("access_requests")
+        .select(
+          "id, request_type, status, note, created_at, patient:patients(full_name)",
+        )
+        .in("status", ["open", "in_analysis"])
+        .in("patient_id", patientIds)
+        .order("created_at");
+      requests = (data ?? []).map((r) => ({
+        ...r,
+        patient: Array.isArray(r.patient) ? (r.patient[0] ?? null) : r.patient,
+      }));
+    }
+  }
 
   const pendingTotal = (openCharges ?? []).reduce(
     (sum, c) => sum + c.amount_cents,
@@ -155,6 +189,60 @@ export default async function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {requests.length > 0 && (
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-base">
+              Solicitações de pacientes
+            </CardTitle>
+            <CardDescription>
+              Pedidos feitos pelo portal — a decisão é sua.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y divide-border text-sm">
+              {requests.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex items-center justify-between gap-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium">
+                      {r.patient?.full_name} — {r.request_type}
+                    </p>
+                    {r.note && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        {r.note}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <form
+                      action={decideAccessRequest.bind(
+                        null,
+                        r.id,
+                        "fulfilled",
+                      )}
+                    >
+                      <Button type="submit" size="sm">
+                        Atender
+                      </Button>
+                    </form>
+                    <form
+                      action={decideAccessRequest.bind(null, r.id, "denied")}
+                    >
+                      <Button type="submit" variant="outline" size="sm">
+                        Negar
+                      </Button>
+                    </form>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

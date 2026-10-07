@@ -2,6 +2,11 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
+import { createAccessRequest } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -19,21 +24,27 @@ export default async function PortalPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/portal");
 
-  const [{ data: appointments }, { data: charges }] = await Promise.all([
-    supabase
-      .from("appointments")
-      .select("id, starts_at, status, modality")
-      .gte("starts_at", new Date().toISOString())
-      .order("starts_at")
-      .limit(10)
-      .returns<Appointment[]>(),
-    supabase
-      .from("charges")
-      .select("id, amount_cents, status, due_date")
-      .order("due_date", { ascending: false })
-      .limit(10)
-      .returns<Charge[]>(),
-  ]);
+  const [{ data: appointments }, { data: charges }, { data: requests }] =
+    await Promise.all([
+      supabase
+        .from("appointments")
+        .select("id, starts_at, status, modality")
+        .gte("starts_at", new Date().toISOString())
+        .order("starts_at")
+        .limit(10)
+        .returns<Appointment[]>(),
+      supabase
+        .from("charges")
+        .select("id, amount_cents, status, due_date")
+        .order("due_date", { ascending: false })
+        .limit(10)
+        .returns<Charge[]>(),
+      supabase
+        .from("access_requests")
+        .select("id, request_type, status, note, created_at")
+        .order("created_at", { ascending: false })
+        .limit(10),
+    ]);
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 p-6">
@@ -110,6 +121,71 @@ export default async function PortalPage() {
             <p className="py-4 text-sm text-muted-foreground">
               Nenhuma cobrança no momento.
             </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-base">Solicitar documento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form action={createAccessRequest} className="grid gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="request_type">Tipo de documento</Label>
+              <select
+                id="request_type"
+                name="request_type"
+                required
+                className="h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              >
+                <option value="declaration">Declaração</option>
+                <option value="certificate">Atestado</option>
+                <option value="report">Relatório</option>
+                <option value="document">Outro documento</option>
+              </select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="period">Período</Label>
+              <Input
+                id="period"
+                name="period"
+                placeholder="ex.: últimos 3 meses (opcional)"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="note">Observação</Label>
+              <Textarea
+                id="note"
+                name="note"
+                rows={2}
+                placeholder="Para que você precisa do documento?"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" size="sm">
+                Enviar solicitação
+              </Button>
+            </div>
+          </form>
+
+          {requests && requests.length > 0 && (
+            <ul className="mt-4 divide-y divide-border border-t text-sm">
+              {requests.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex items-center justify-between py-2.5"
+                >
+                  <span>
+                    {r.request_type}
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                  </span>
+                  <StatusBadge status={r.status} />
+                </li>
+              ))}
+            </ul>
           )}
         </CardContent>
       </Card>

@@ -8,6 +8,7 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
+  ScrollText,
   Settings,
   Users,
   Wallet,
@@ -29,6 +30,7 @@ const NAV = [
   { href: "/pacientes", label: "Pacientes", icon: Users },
   { href: "/financeiro", label: "Financeiro", icon: Wallet },
   { href: "/documentos", label: "Documentos", icon: FileText },
+  { href: "/auditoria", label: "Auditoria", icon: ScrollText, adminOnly: true },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
@@ -76,7 +78,9 @@ export function AppSidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 px-3">
-        {NAV.map((item) => {
+        {NAV.filter(
+          (item) => !item.adminOnly || profile.role === "clinic_admin",
+        ).map((item) => {
           const active = pathname.startsWith(item.href);
           return (
             <Link
