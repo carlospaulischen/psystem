@@ -39,11 +39,11 @@ export default async function PortalPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 p-6">
       <div className="flex items-center gap-3">
         <Image
-          src="/brand/psystem/symbol-128.png"
+          src="/brand/psystem/logo-horizontal.png"
           alt="PSYSTEM"
-          width={36}
-          height={36}
-          className="size-9"
+          width={510}
+          height={220}
+          className="h-8 w-auto"
         />
         <h1 className="text-2xl font-semibold tracking-tight">Meu portal</h1>
       </div>

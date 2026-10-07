@@ -11,12 +11,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { VersionForm } from "./version-form";
+
 interface Entry {
   id: string;
   entry_type: string;
   latest_version: number;
   created_at: string;
-  versions: { content: string; procedures: string | null; created_at: string }[];
+  versions: {
+    version: number;
+    content: string;
+    procedures: string | null;
+    change_reason: string | null;
+    created_at: string;
+  }[];
 }
 
 const ENTRY_TYPE_LABEL: Record<string, string> = {
@@ -42,7 +50,7 @@ export async function ClinicalRecordPanel({
   const { data: entries } = await supabase
     .from("record_entries")
     .select(
-      "id, entry_type, latest_version, created_at, versions:record_entry_versions(content, procedures, created_at)",
+      "id, entry_type, latest_version, created_at, versions:record_entry_versions(version, content, procedures, change_reason, created_at)",
     )
     .eq("record_id", recordId)
     .order("created_at", { ascending: false })
@@ -85,9 +93,11 @@ export async function ClinicalRecordPanel({
           {entries && entries.length > 0 ? (
             <ul className="space-y-4">
               {entries.map((e) => {
-                const latest = e.versions.reduce((a, b) =>
-                  a.created_at > b.created_at ? a : b,
+                const sorted = [...e.versions].sort(
+                  (a, b) => b.version - a.version,
                 );
+                const latest = sorted[0];
+                const previous = sorted.slice(1);
                 return (
                   <li
                     key={e.id}
@@ -111,6 +121,36 @@ export async function ClinicalRecordPanel({
                         {latest.procedures}
                       </p>
                     )}
+
+                    {previous.length > 0 && (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground">
+                          Versões anteriores ({previous.length})
+                        </summary>
+                        <ul className="mt-2 space-y-2 border-l-2 border-border pl-3">
+                          {previous.map((v) => (
+                            <li key={v.version}>
+                              <p className="text-xs text-muted-foreground">
+                                v{v.version} ·{" "}
+                                {new Date(v.created_at).toLocaleString("pt-BR")}
+                                {v.change_reason &&
+                                  ` · motivo: ${v.change_reason}`}
+                              </p>
+                              <p className="mt-1 whitespace-pre-wrap text-muted-foreground/80">
+                                {v.content}
+                              </p>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+
+                    <details className="mt-3">
+                      <summary className="cursor-pointer text-xs font-medium text-primary hover:underline">
+                        Nova versão do registro
+                      </summary>
+                      <VersionForm entryId={e.id} patientId={patientId} />
+                    </details>
                   </li>
                 );
               })}

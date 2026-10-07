@@ -95,7 +95,10 @@ export default async function AgendaPage() {
                   <div className="flex items-center gap-2">
                     <StatusBadge status={a.status} />
                     {a.status !== "cancelled" && a.status !== "completed" && (
-                      <AppointmentStatusMenu appointmentId={a.id} />
+                      <AppointmentStatusMenu
+                        appointmentId={a.id}
+                        startsAt={a.starts_at}
+                      />
                     )}
                   </div>
                 </li>

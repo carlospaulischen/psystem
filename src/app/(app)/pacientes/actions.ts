@@ -87,6 +87,87 @@ export async function addRecordEntry(
   revalidatePath(`/pacientes/${patientId}`);
 }
 
+export type VersionState = { error?: string } | null;
+
+// Nova versão de um registro existente — exige change_reason (ET-004/005).
+export async function addRecordVersion(
+  entryId: string,
+  patientId: string,
+  _prev: VersionState,
+  formData: FormData,
+): Promise<VersionState> {
+  await requireStaff();
+  const supabase = await createClient();
+
+  const content = (formData.get("content") as string)?.trim();
+  const reason = (formData.get("change_reason") as string)?.trim();
+  if (!content) return { error: "Escreva o conteúdo da nova versão." };
+
+  const { error } = await supabase.rpc("add_entry_version", {
+    p_entry_id: entryId,
+    p_content: content,
+    p_procedures: (formData.get("procedures") as string) || null,
+    p_change_reason: reason || null,
+  });
+
+  if (error) {
+    if (error.message.includes("change_reason_required")) {
+      return { error: "Informe o motivo da alteração." };
+    }
+    console.error("[record] add_entry_version:", error.message);
+    return { error: "Não foi possível salvar a nova versão." };
+  }
+
+  revalidatePath(`/pacientes/${patientId}`);
+  return null;
+}
+
+export async function updatePatient(patientId: string, formData: FormData) {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const fullName = (formData.get("full_name") as string)?.trim();
+  if (!fullName) redirect(`/pacientes/${patientId}/editar?error=required`);
+
+  const guardianName = (formData.get("guardian_name") as string)?.trim();
+  const guardian =
+    guardianName != null && guardianName !== ""
+      ? {
+          full_name: guardianName,
+          phone: (formData.get("guardian_phone") as string) || null,
+          kinship: (formData.get("guardian_kinship") as string) || null,
+        }
+      : null;
+
+  const { error } = await supabase
+    .from("patients")
+    .update({
+      full_name: fullName,
+      cpf: (formData.get("cpf") as string) || null,
+      birth_date: (formData.get("birth_date") as string) || null,
+      phone: (formData.get("phone") as string) || null,
+      email: (formData.get("email") as string) || null,
+      admin_notes: (formData.get("admin_notes") as string) || null,
+      guardian,
+    })
+    .eq("id", patientId);
+
+  if (error) {
+    redirect(`/pacientes/${patientId}/editar?error=save`);
+  }
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "patient",
+    resourceId: patientId,
+    action: "PACIENTE_ATUALIZADO",
+    patientId,
+  });
+
+  revalidatePath(`/pacientes/${patientId}`);
+  redirect(`/pacientes/${patientId}`);
+}
+
 export async function updatePatientStatus(patientId: string, status: string) {
   const { profile } = await requireStaff();
   const supabase = await createClient();

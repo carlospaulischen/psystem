@@ -104,18 +104,15 @@ export default function Home() {
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center">
             <Image
-              src="/brand/psystem/symbol-128.png"
+              src="/brand/psystem/logo-horizontal.png"
               alt="PSYSTEM"
-              width={30}
-              height={30}
-              className="size-7"
+              width={510}
+              height={220}
+              className="h-8 w-auto"
               priority
             />
-            <span className="text-lg font-semibold tracking-wide">
-              PSYSTEM
-            </span>
           </Link>
           <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
             <a href="#funcionalidades" className="hover:text-foreground">

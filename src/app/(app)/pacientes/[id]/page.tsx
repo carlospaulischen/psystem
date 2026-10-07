@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { ClinicalRecordPanel } from "./clinical-record-panel";
+import { PatientActions } from "./patient-actions";
 import type { Appointment, Charge } from "@/types";
 
 function formatBRL(cents: number) {
@@ -91,7 +92,16 @@ export default async function PacienteDetailPage({
               : "Sem psicólogo vinculado"}
           </p>
         </div>
-        <StatusBadge status={patient.status} />
+        <div className="flex items-center gap-2">
+          <StatusBadge status={patient.status} />
+          <Link
+            href={`/pacientes/${patient.id}/editar`}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Editar
+          </Link>
+          <PatientActions patientId={patient.id} status={patient.status} />
+        </div>
       </header>
 
       <Tabs defaultValue="dados" className="mt-6">

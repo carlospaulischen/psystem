@@ -61,21 +61,18 @@ export function AppSidebar({
 
   return (
     <aside className="flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex items-center gap-2.5 px-5 py-5">
+      <div className="px-5 py-5">
         <Image
-          src="/brand/psystem/symbol-128.png"
+          src="/brand/psystem/logo-horizontal-dark.png"
           alt="PSYSTEM"
-          width={32}
-          height={32}
-          className="size-8 shrink-0"
+          width={510}
+          height={255}
+          className="h-9 w-auto"
           priority
         />
-        <div className="min-w-0">
-          <p className="font-semibold leading-none tracking-wide">PSYSTEM</p>
-          <p className="mt-1 truncate text-xs text-sidebar-foreground/60">
-            {profile.organization?.name}
-          </p>
-        </div>
+        <p className="mt-2 truncate text-xs text-sidebar-foreground/60">
+          {profile.organization?.name}
+        </p>
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 px-3">

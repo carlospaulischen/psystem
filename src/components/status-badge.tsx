@@ -14,6 +14,9 @@ const STYLES: Record<string, { label: string; className: string }> = {
   cancelled: { label: "Cancelada", className: "bg-red-500/15 text-red-700 dark:text-red-400" },
   no_show: { label: "Faltou", className: "bg-orange-500/15 text-orange-700 dark:text-orange-400" },
   blocked: { label: "Bloqueado", className: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400" },
+  // members
+  invited: { label: "Convite enviado", className: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
+  inactive: { label: "Inativo", className: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400" },
   // patients
   active: { label: "Ativo", className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
   paused: { label: "Pausado", className: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },

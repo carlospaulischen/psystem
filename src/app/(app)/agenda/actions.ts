@@ -49,6 +49,60 @@ export async function createAppointment(formData: FormData) {
   redirect("/agenda");
 }
 
+// Remarcação: atualiza início/fim preservando sala/modalidade.
+// A constraint do Postgres continua bloqueando conflito (23P01).
+export async function rescheduleAppointment(
+  appointmentId: string,
+  formData: FormData,
+): Promise<{ error?: string } | null> {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const date = formData.get("date") as string;
+  const time = formData.get("time") as string;
+  const durationMin = Number(formData.get("duration_min") ?? 50);
+  if (!date || !time) return { error: "Informe data e horário." };
+
+  const { data: current } = await supabase
+    .from("appointments")
+    .select("patient_id")
+    .eq("id", appointmentId)
+    .single();
+  if (!current) return { error: "Agendamento não encontrado." };
+
+  const startsAt = new Date(`${date}T${time}:00`);
+  const endsAt = new Date(startsAt.getTime() + durationMin * 60_000);
+
+  const { error } = await supabase
+    .from("appointments")
+    .update({
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+      status: "awaiting_confirmation",
+    })
+    .eq("id", appointmentId);
+
+  if (error) {
+    if (error.code === "23P01") {
+      return { error: "Conflito de horário para o psicólogo ou a sala." };
+    }
+    console.error("[agenda] reschedule:", error.message);
+    return { error: "Não foi possível remarcar." };
+  }
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "appointment",
+    resourceId: appointmentId,
+    action: "AGENDAMENTO_REMARCADO",
+    patientId: current.patient_id,
+    metadata: { starts_at: startsAt.toISOString() },
+  });
+
+  revalidatePath("/agenda");
+  return null;
+}
+
 export async function updateAppointmentStatus(
   appointmentId: string,
   status: string,
