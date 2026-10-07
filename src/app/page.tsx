@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { StatusBadge } from "@/components/status-badge";
 
 export const metadata: Metadata = {
   title: "Gestão para psicólogos e clínicas",
@@ -110,7 +111,7 @@ export default function Home() {
               alt="PSYSTEM"
               width={510}
               height={220}
-              className="h-8 w-auto"
+              className="h-11 w-auto"
               priority
             />
           </Link>
@@ -135,42 +136,121 @@ export default function Home() {
       <section className="relative overflow-hidden">
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-32 -left-32 size-[480px] rounded-full bg-primary/15 blur-3xl"
+          className="pointer-events-none absolute -top-40 -left-40 size-[560px] rounded-full bg-primary/15 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-20 -right-24 size-[420px] rounded-full bg-[#14b8a6]/15 blur-3xl"
+          className="pointer-events-none absolute top-20 -right-32 size-[480px] rounded-full bg-[#14b8a6]/15 blur-3xl"
         />
-        <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center px-6 py-24 text-center md:py-32">
-          <Image
-            src="/brand/psystem/logo.png"
-            alt="PSYSTEM — Tecnologia para saúde mental"
-            width={520}
-            height={430}
-            className="w-56 md:w-72 h-auto"
-            priority
-          />
-          <h1 className="mt-10 max-w-3xl text-4xl font-bold tracking-tight md:text-5xl">
-            A gestão da sua clínica, com o sigilo que a psicologia exige
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-            Agenda, prontuário, financeiro e portal do paciente em uma
-            plataforma segura — feita para psicólogos, clínicas e quem
-            confia o cuidado a eles.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/login"
-              className={buttonVariants({ size: "lg" })}
-            >
-              Acessar a plataforma
-            </Link>
-            <a
-              href="#funcionalidades"
-              className={buttonVariants({ variant: "outline", size: "lg" })}
-            >
-              Conhecer funcionalidades
-            </a>
+        <div className="relative mx-auto grid w-full max-w-6xl items-center gap-14 px-6 py-20 md:py-28 lg:grid-cols-2">
+          <div>
+            <div className="flex items-center gap-3">
+              <Image
+                src="/brand/psystem/symbol-1024.png"
+                alt=""
+                width={1024}
+                height={1024}
+                className="size-10"
+                priority
+              />
+              <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+                Tecnologia para saúde mental
+              </p>
+            </div>
+            <h1 className="mt-6 text-4xl font-bold tracking-tight md:text-5xl">
+              A gestão da sua clínica, com o sigilo que a psicologia exige
+            </h1>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+              Agenda, prontuário, financeiro e portal do paciente em uma
+              plataforma segura — feita para psicólogos, clínicas e quem
+              confia o cuidado a eles.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                href="/login"
+                className={buttonVariants({ size: "lg" })}
+              >
+                Acessar a plataforma
+              </Link>
+              <a
+                href="#funcionalidades"
+                className={buttonVariants({ variant: "outline", size: "lg" })}
+              >
+                Conhecer funcionalidades
+              </a>
+            </div>
+            <dl className="mt-10 flex gap-8 text-sm">
+              <div>
+                <dt className="text-muted-foreground">Sigilo</dt>
+                <dd className="font-semibold">por construção</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Auditoria</dt>
+                <dd className="font-semibold">imutável</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Dados</dt>
+                <dd className="font-semibold">no Brasil</dd>
+              </div>
+            </dl>
+          </div>
+
+          {/* Mockup do produto — agenda do dia */}
+          <div className="relative">
+            <div
+              aria-hidden
+              className="absolute -top-8 -right-6 size-64 rounded-full bg-primary/20 blur-3xl"
+            />
+            <div className="relative rounded-3xl border border-border/70 bg-card p-2 shadow-2xl shadow-primary/10">
+              <div className="flex items-center gap-1.5 border-b border-border/60 px-4 py-3">
+                <span className="size-2.5 rounded-full bg-red-400/70" />
+                <span className="size-2.5 rounded-full bg-amber-400/70" />
+                <span className="size-2.5 rounded-full bg-emerald-400/70" />
+                <span className="ml-3 text-xs text-muted-foreground">
+                  psystem.app/agenda
+                </span>
+              </div>
+              <div className="space-y-2 p-4">
+                <div className="flex items-center justify-between pb-1">
+                  <p className="text-sm font-semibold">Agenda — hoje</p>
+                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                    6 consultas
+                  </span>
+                </div>
+                {[
+                  { t: "09:00", n: "Maria Silva", s: "completed" },
+                  { t: "10:00", n: "João Pereira", s: "confirmed" },
+                  { t: "14:00", n: "Fernanda Costa", s: "awaiting_confirmation" },
+                  { t: "15:00", n: "Carlos Souza", s: "scheduled" },
+                ].map((r) => (
+                  <div
+                    key={r.t}
+                    className="flex items-center justify-between rounded-xl border border-border/60 bg-background px-4 py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-11 text-sm font-medium tabular-nums">
+                        {r.t}
+                      </span>
+                      <span className="text-sm">{r.n}</span>
+                    </div>
+                    <StatusBadge status={r.s} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Card flutuante — pagamento */}
+            <div className="absolute -bottom-6 -left-4 flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-3 shadow-xl shadow-primary/10 md:-left-10">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-[#14b8a6]/10 text-[#0f766e]">
+                <Wallet className="size-4" />
+              </div>
+              <div className="text-sm">
+                <p className="font-semibold">R$ 200,00 recebidos</p>
+                <p className="text-xs text-muted-foreground">
+                  PIX · NFS-e emitida
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -189,7 +269,7 @@ export default function Home() {
             {FEATURES.map((f) => (
               <div
                 key={f.title}
-                className="rounded-2xl border border-border bg-background p-6"
+                className="rounded-2xl border border-border bg-background p-6 transition-shadow hover:shadow-lg hover:shadow-primary/5"
               >
                 <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <f.icon className="size-5" />
