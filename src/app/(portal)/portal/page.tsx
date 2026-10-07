@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
@@ -36,7 +37,16 @@ export default async function PortalPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Meu portal</h1>
+      <div className="flex items-center gap-3">
+        <Image
+          src="/brand/psystem/symbol-128.png"
+          alt="PSYSTEM"
+          width={36}
+          height={36}
+          className="size-9"
+        />
+        <h1 className="text-2xl font-semibold tracking-tight">Meu portal</h1>
+      </div>
 
       <Card className="mt-6">
         <CardHeader>

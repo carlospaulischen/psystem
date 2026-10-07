@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
@@ -10,7 +11,6 @@ import {
   Settings,
   Users,
   Wallet,
-  HeartPulse,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -62,11 +62,16 @@ export function AppSidebar({
   return (
     <aside className="flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-          <HeartPulse className="size-4" />
-        </div>
+        <Image
+          src="/brand/psystem/symbol-128.png"
+          alt="PSYSTEM"
+          width={32}
+          height={32}
+          className="size-8 shrink-0"
+          priority
+        />
         <div className="min-w-0">
-          <p className="font-semibold leading-none">psystem</p>
+          <p className="font-semibold leading-none tracking-wide">PSYSTEM</p>
           <p className="mt-1 truncate text-xs text-sidebar-foreground/60">
             {profile.organization?.name}
           </p>

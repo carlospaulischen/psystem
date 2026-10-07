@@ -1,4 +1,4 @@
-import { HeartPulse } from "lucide-react";
+import Image from "next/image";
 import { login } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 export default async function LoginPage({
@@ -22,10 +21,14 @@ export default async function LoginPage({
     <main className="flex flex-1 items-center justify-center bg-muted/40 px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <HeartPulse className="size-5" />
-          </div>
-          <CardTitle className="text-2xl">psystem</CardTitle>
+          <Image
+            src="/brand/psystem/logo.png"
+            alt="PSYSTEM — Tecnologia para saúde mental"
+            width={200}
+            height={160}
+            className="mb-1 h-auto w-44"
+            priority
+          />
           <CardDescription>
             Gestão para psicólogos e clínicas
           </CardDescription>
