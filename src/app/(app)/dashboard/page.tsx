@@ -1,4 +1,3 @@
-import { connection } from "next/server";
 import { CalendarDays, CircleAlert, FileText, Wallet } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -27,7 +26,6 @@ function formatBRL(cents: number) {
 }
 
 export default async function DashboardPage() {
-  await connection(); // new Date() abaixo é dado de runtime (Next 16)
   const { profile } = await requireStaff();
   const supabase = await createClient();
 

@@ -1,4 +1,3 @@
-import { connection } from "next/server";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
@@ -24,7 +23,6 @@ function timeLabel(iso: string) {
 }
 
 export default async function AgendaPage() {
-  await connection(); // new Date() abaixo é dado de runtime (Next 16)
   await requireStaff();
   const supabase = await createClient();
 

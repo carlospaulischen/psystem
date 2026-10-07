@@ -16,8 +16,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { ClinicalRecordPanel } from "./clinical-record-panel";
 import type { Appointment, Charge } from "@/types";
 
-export const instant = false;
-
 function formatBRL(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
     style: "currency",

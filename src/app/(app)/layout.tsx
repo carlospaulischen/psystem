@@ -1,18 +1,11 @@
-import { connection } from "next/server";
 import { requireStaff } from "@/lib/auth";
 import { AppSidebar } from "@/components/app-sidebar";
-
-// Área interna é inteiramente dinâmica (sessão via cookies a cada request).
-export const instant = false;
 
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // A verificação de sessão lê Date.now() (expiração do JWT) — marcar como
-  // runtime evita o bloqueio de prerender do Next 16.
-  await connection();
   const { profile } = await requireStaff();
 
   return (

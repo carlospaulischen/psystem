@@ -14,8 +14,6 @@ import {
 } from "@/components/ui/card";
 import type { Profile } from "@/types";
 
-export const instant = false;
-
 export default async function NovoPacientePage({
   searchParams,
 }: {

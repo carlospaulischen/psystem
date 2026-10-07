@@ -1,4 +1,3 @@
-import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
@@ -12,10 +11,7 @@ import type { Appointment, Charge } from "@/types";
 
 // Portal do paciente — acesso apenas ao próprio contexto via RLS
 // (is_patient_portal_user). Sem qualquer dado clínico (ET-002).
-export const instant = false;
-
 export default async function PortalPage() {
-  await connection(); // new Date() abaixo é dado de runtime (Next 16)
   const supabase = await createClient();
   const {
     data: { user },
