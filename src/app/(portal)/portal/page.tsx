@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
@@ -14,6 +15,7 @@ import type { Appointment, Charge } from "@/types";
 export const instant = false;
 
 export default async function PortalPage() {
+  await connection(); // new Date() abaixo é dado de runtime (Next 16)
   const supabase = await createClient();
   const {
     data: { user },
