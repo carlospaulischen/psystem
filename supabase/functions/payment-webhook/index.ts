@@ -5,7 +5,7 @@
 // Adapter: cada gateway tem formato/assinatura próprios. Manter o parsing
 // no provider e o efeito no banco genérico (ver ./providers/).
 
-import { createClient } from "jsr:@supabase/supabase-js@2";
+// import { createClient } from "jsr:@supabase/supabase-js@2";
 
 // interface GatewayAdapter {
 //   verifySignature(req: Request, raw: string): boolean;
@@ -33,10 +33,9 @@ Deno.serve(async (req) => {
   //   }
   //   const event = adapter.parseEvent(JSON.parse(raw));
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
+  // Criar o cliente admin aqui quando o adapter for implementado:
+  //   const supabase = createClient(Deno.env.get("SUPABASE_URL")!,
+  //     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   // Esqueleto do efeito (descomentar com o adapter implementado):
   //

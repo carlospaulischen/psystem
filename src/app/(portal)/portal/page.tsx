@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { StatusBadge } from "@/components/status-badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { Appointment, Charge } from "@/types";
 
 // Portal do paciente — acesso apenas ao próprio contexto via RLS
@@ -30,55 +37,74 @@ export default async function PortalPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-2xl flex-1 p-8">
-      <h1 className="text-2xl font-semibold">Meu portal</h1>
+    <main className="mx-auto w-full max-w-2xl flex-1 p-6">
+      <h1 className="text-2xl font-semibold tracking-tight">Meu portal</h1>
 
-      <section className="mt-6 rounded-xl border border-zinc-200 bg-white p-5">
-        <h2 className="font-medium">Próximas consultas</h2>
-        {appointments && appointments.length > 0 ? (
-          <ul className="mt-3 space-y-2 text-sm">
-            {appointments.map((a) => (
-              <li key={a.id}>
-                {new Date(a.starts_at).toLocaleString("pt-BR", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-                {" · "}
-                {a.modality === "online" ? "Online" : "Presencial"}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-3 text-sm text-zinc-500">
-            Nenhuma consulta agendada.
-          </p>
-        )}
-      </section>
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-base">Próximas consultas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {appointments && appointments.length > 0 ? (
+            <ul className="divide-y divide-border text-sm">
+              {appointments.map((a) => (
+                <li
+                  key={a.id}
+                  className="flex items-center justify-between py-2.5"
+                >
+                  <span>
+                    {new Date(a.starts_at).toLocaleString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    <span className="ml-2 text-muted-foreground">
+                      {a.modality === "online" ? "Online" : "Presencial"}
+                    </span>
+                  </span>
+                  <StatusBadge status={a.status} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-4 text-sm text-muted-foreground">
+              Nenhuma consulta agendada.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5">
-        <h2 className="font-medium">Pagamentos</h2>
-        {charges && charges.length > 0 ? (
-          <ul className="mt-3 space-y-2 text-sm">
-            {charges.map((c) => (
-              <li key={c.id} className="flex justify-between">
-                <span>
-                  {(c.amount_cents / 100).toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
-                </span>
-                <span className="text-zinc-500">{c.status}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-3 text-sm text-zinc-500">
-            Nenhuma cobrança no momento.
-          </p>
-        )}
-      </section>
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-base">Pagamentos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {charges && charges.length > 0 ? (
+            <ul className="divide-y divide-border text-sm">
+              {charges.map((c) => (
+                <li
+                  key={c.id}
+                  className="flex items-center justify-between py-2.5"
+                >
+                  <span className="tabular-nums">
+                    {(c.amount_cents / 100).toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </span>
+                  <StatusBadge status={c.status} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-4 text-sm text-muted-foreground">
+              Nenhuma cobrança no momento.
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </main>
   );
 }

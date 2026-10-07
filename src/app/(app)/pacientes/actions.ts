@@ -1,0 +1,111 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { requireStaff } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
+
+export async function createPatient(formData: FormData) {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const fullName = (formData.get("full_name") as string)?.trim();
+  if (!fullName) redirect("/pacientes/novo?error=required");
+
+  const psychologistId = (formData.get("psychologist_id") as string) || null;
+
+  const { data: patient, error } = await supabase
+    .from("patients")
+    .insert({
+      organization_id: profile.organization_id,
+      full_name: fullName,
+      cpf: (formData.get("cpf") as string) || null,
+      birth_date: (formData.get("birth_date") as string) || null,
+      phone: (formData.get("phone") as string) || null,
+      email: (formData.get("email") as string) || null,
+      admin_notes: (formData.get("admin_notes") as string) || null,
+      created_by: profile.id,
+    })
+    .select("id")
+    .single();
+
+  if (error || !patient) {
+    redirect("/pacientes/novo?error=save");
+  }
+
+  // Vínculo paciente ↔ psicólogo responsável (ABAC — base do acesso clínico).
+  if (psychologistId) {
+    await supabase.from("patient_links").insert({
+      organization_id: profile.organization_id,
+      patient_id: patient.id,
+      psychologist_id: psychologistId,
+    });
+    // Prontuário é criado junto ao vínculo.
+    await supabase.from("clinical_records").insert({
+      organization_id: profile.organization_id,
+      patient_id: patient.id,
+    });
+  }
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "patient",
+    resourceId: patient.id,
+    action: "PACIENTE_CRIADO",
+    patientId: patient.id,
+  });
+
+  redirect(`/pacientes/${patient.id}`);
+}
+
+// Cria registro de atendimento (versão 1) via função do banco que
+// valida vínculo psicólogo-paciente (create_record_entry — ET-004).
+export async function addRecordEntry(
+  recordId: string,
+  patientId: string,
+  formData: FormData,
+) {
+  await requireStaff();
+  const supabase = await createClient();
+
+  const content = (formData.get("content") as string)?.trim();
+  if (!content) return;
+
+  const { error } = await supabase.rpc("create_record_entry", {
+    p_record_id: recordId,
+    p_appointment_id: null,
+    p_entry_type: "session",
+    p_content: content,
+    p_procedures: (formData.get("procedures") as string) || null,
+  });
+
+  if (error) {
+    console.error("[record] create_record_entry:", error.message);
+  }
+
+  revalidatePath(`/pacientes/${patientId}`);
+}
+
+export async function updatePatientStatus(patientId: string, status: string) {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("patients")
+    .update({ status })
+    .eq("id", patientId);
+
+  if (!error) {
+    await logAudit({
+      organizationId: profile.organization_id,
+      resourceType: "patient",
+      resourceId: patientId,
+      action: status === "archived" ? "PACIENTE_ARQUIVADO" : "PACIENTE_ATUALIZADO",
+      patientId,
+      metadata: { status },
+    });
+  }
+
+  revalidatePath(`/pacientes/${patientId}`);
+}

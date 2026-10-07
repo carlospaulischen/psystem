@@ -1,13 +1,21 @@
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { StatusBadge } from "@/components/status-badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { Charge } from "@/types";
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pendente",
-  paid: "Pago",
-  overdue: "Vencido",
-  cancelled: "Cancelado",
-};
 
 function formatBRL(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -24,7 +32,7 @@ export default async function FinanceiroPage() {
     .from("charges")
     .select("id, amount_cents, status, due_date, patient:patients(full_name)")
     .order("due_date", { ascending: false })
-    .limit(50)
+    .limit(100)
     .returns<(Charge & { patient: { full_name: string } | null })[]>();
 
   const totals = (charges ?? []).reduce(
@@ -36,53 +44,73 @@ export default async function FinanceiroPage() {
   );
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <h1 className="text-2xl font-semibold">Financeiro</h1>
+    <div>
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight">Financeiro</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Cobranças e recebimentos
+        </p>
+      </header>
 
-      <div className="mt-6 grid grid-cols-3 gap-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {(["paid", "pending", "overdue"] as const).map((s) => (
-          <div
-            key={s}
-            className="rounded-xl border border-zinc-200 bg-white p-4"
-          >
-            <p className="text-xs text-zinc-500">{STATUS_LABEL[s]}</p>
-            <p className="mt-1 text-lg font-semibold">
-              {formatBRL(totals[s] ?? 0)}
-            </p>
-          </div>
+          <Card key={s}>
+            <CardHeader className="pb-2">
+              <CardDescription>
+                {s === "paid" ? "Recebido" : s === "pending" ? "Pendente" : "Vencido"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-semibold">
+                {formatBRL(totals[s] ?? 0)}
+              </p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <div className="mt-6 rounded-xl border border-zinc-200 bg-white">
-        {charges && charges.length > 0 ? (
-          <ul className="divide-y divide-zinc-100">
-            {charges.map((c) => (
-              <li
-                key={c.id}
-                className="flex items-center justify-between px-5 py-3 text-sm"
-              >
-                <span>
-                  {c.patient?.full_name ?? "—"}
-                  <span className="ml-2 text-xs text-zinc-400">
+      <div className="mt-6 rounded-xl border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Paciente</TableHead>
+              <TableHead>Vencimento</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="w-28">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {charges && charges.length > 0 ? (
+              charges.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-medium">
+                    {c.patient?.full_name ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
                     {c.due_date
-                      ? `vence ${new Date(c.due_date).toLocaleDateString("pt-BR")}`
-                      : ""}
-                  </span>
-                </span>
-                <span>
-                  <span className="font-medium">{formatBRL(c.amount_cents)}</span>
-                  <span className="ml-3 text-xs text-zinc-500">
-                    {STATUS_LABEL[c.status]}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="px-5 py-8 text-center text-sm text-zinc-500">
-            Nenhuma cobrança registrada.
-          </p>
-        )}
+                      ? new Date(c.due_date).toLocaleDateString("pt-BR")
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatBRL(c.amount_cents)}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={c.status} />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  className="py-10 text-center text-sm text-muted-foreground"
+                >
+                  Nenhuma cobrança registrada.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
