@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { addRecordEntry } from "../actions";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -86,8 +87,33 @@ export async function ClinicalRecordPanel({
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base">Histórico</CardTitle>
+          <details className="group relative">
+            <summary className="cursor-pointer list-none text-xs font-medium text-primary hover:underline">
+              Exportar prontuário
+            </summary>
+            <form
+              method="get"
+              action={`/pacientes/${patientId}/prontuario`}
+              target="_blank"
+              className="absolute right-0 z-10 mt-2 w-72 space-y-2 rounded-xl border border-border bg-card p-4 shadow-lg"
+            >
+              <Label htmlFor="motivo-export">Motivo da exportação *</Label>
+              <Input
+                id="motivo-export"
+                name="motivo"
+                required
+                placeholder="ex.: solicitação do paciente"
+              />
+              <p className="text-xs text-muted-foreground">
+                Exportações ficam registradas na trilha de auditoria.
+              </p>
+              <Button type="submit" size="sm" className="w-full">
+                Baixar PDF
+              </Button>
+            </form>
+          </details>
         </CardHeader>
         <CardContent>
           {entries && entries.length > 0 ? (

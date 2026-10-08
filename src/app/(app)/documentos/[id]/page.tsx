@@ -11,7 +11,7 @@ import {
   invalidateDocument,
   issueDocument,
 } from "../actions";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -76,7 +76,16 @@ export default async function DocumentoPage({
             {doc.patient?.full_name} · criado por {profile.full_name}
           </p>
         </div>
-        <StatusBadge status={doc.status} />
+        <div className="flex items-center gap-2">
+          <StatusBadge status={doc.status} />
+          <Link
+            href={`/documentos/${doc.id}/pdf`}
+            target="_blank"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Baixar PDF
+          </Link>
+        </div>
       </header>
 
       <div className="mt-6 space-y-4">
