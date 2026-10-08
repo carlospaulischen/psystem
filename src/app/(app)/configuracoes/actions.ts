@@ -83,6 +83,35 @@ export async function inviteStaff(
   return { ok: true };
 }
 
+// Disponibilidade semanal — o psicólogo gerencia os próprios horários
+// (RLS também permite a recepção/admin; a UI oferece só ao psicólogo).
+export async function addAvailability(formData: FormData) {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const weekday = Number(formData.get("weekday"));
+  const startTime = formData.get("start_time") as string;
+  const endTime = formData.get("end_time") as string;
+  if (!Number.isInteger(weekday) || !startTime || !endTime) return;
+
+  await supabase.from("availability").insert({
+    organization_id: profile.organization_id,
+    psychologist_id: profile.id,
+    weekday,
+    start_time: startTime,
+    end_time: endTime,
+  });
+
+  revalidatePath("/configuracoes");
+}
+
+export async function removeAvailability(id: string) {
+  await requireStaff();
+  const supabase = await createClient();
+  await supabase.from("availability").delete().eq("id", id);
+  revalidatePath("/configuracoes");
+}
+
 export async function updateMemberStatus(
   memberId: string,
   status: "active" | "inactive" | "blocked",

@@ -1,6 +1,10 @@
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
+import { ChargeMenu } from "./charge-menu";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -45,11 +49,17 @@ export default async function FinanceiroPage() {
 
   return (
     <div>
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Financeiro</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Cobranças e recebimentos
-        </p>
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Financeiro</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Cobranças e recebimentos
+          </p>
+        </div>
+        <Link href="/financeiro/nova" className={buttonVariants()}>
+          <Plus className="size-4" />
+          Nova cobrança
+        </Link>
       </header>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -77,6 +87,7 @@ export default async function FinanceiroPage() {
               <TableHead>Vencimento</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="w-28">Status</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -97,12 +108,15 @@ export default async function FinanceiroPage() {
                   <TableCell>
                     <StatusBadge status={c.status} />
                   </TableCell>
+                  <TableCell>
+                    <ChargeMenu chargeId={c.id} status={c.status} />
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="py-10 text-center text-sm text-muted-foreground"
                 >
                   Nenhuma cobrança registrada.

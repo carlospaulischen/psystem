@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { InviteForm } from "./invite-form";
 import { MemberActions } from "./member-actions";
+import { AvailabilityPanel } from "./availability-panel";
 import {
   Card,
   CardContent,
@@ -21,6 +22,24 @@ export default async function ConfiguracoesPage() {
   const { profile } = await requireStaff();
   const supabase = await createClient();
   const isAdmin = profile.role === "clinic_admin";
+
+  const { data: availability } =
+    profile.role === "psychologist"
+      ? await supabase
+          .from("availability")
+          .select("id, weekday, start_time, end_time")
+          .eq("psychologist_id", profile.id)
+          .order("weekday")
+          .order("start_time")
+          .returns<
+            {
+              id: string;
+              weekday: number;
+              start_time: string;
+              end_time: string;
+            }[]
+          >()
+      : { data: null };
 
   const { data: members } = await supabase
     .from("profiles")
@@ -100,6 +119,20 @@ export default async function ConfiguracoesPage() {
             </ul>
           </CardContent>
         </Card>
+
+        {profile.role === "psychologist" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Minha disponibilidade</CardTitle>
+              <CardDescription>
+                Horários semanais em que você atende — usados na agenda.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AvailabilityPanel slots={availability ?? []} />
+            </CardContent>
+          </Card>
+        )}
 
         {isAdmin && (
           <Card>
