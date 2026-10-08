@@ -109,9 +109,9 @@ export default function Home() {
             <Image
               src="/brand/psystem/logo-horizontal.png"
               alt="PSYSTEM"
-              width={510}
-              height={220}
-              className="h-11 w-auto"
+              width={463}
+              height={145}
+              className="h-12 w-auto"
               priority
             />
           </Link>

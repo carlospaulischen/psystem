@@ -68,8 +68,8 @@ export function AppSidebar({
           src="/brand/psystem/logo-horizontal-dark.png"
           alt="PSYSTEM"
           width={510}
-          height={255}
-          className="h-9 w-auto"
+          height={171}
+          className="h-11 w-auto"
           priority
         />
         <p className="mt-2 truncate text-xs text-sidebar-foreground/60">

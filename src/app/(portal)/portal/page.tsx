@@ -52,9 +52,9 @@ export default async function PortalPage() {
         <Image
           src="/brand/psystem/logo-horizontal.png"
           alt="PSYSTEM"
-          width={510}
-          height={220}
-          className="h-8 w-auto"
+          width={463}
+          height={145}
+          className="h-10 w-auto"
         />
         <h1 className="text-2xl font-semibold tracking-tight">Meu portal</h1>
       </div>
