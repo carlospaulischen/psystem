@@ -5,6 +5,22 @@ import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import { notifyPatientEmail } from "@/lib/messages";
+
+const brl = (cents: number) =>
+  (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+async function patientContact(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  patientId: string,
+) {
+  const { data } = await supabase
+    .from("patients")
+    .select("full_name, email")
+    .eq("id", patientId)
+    .single();
+  return data;
+}
 
 export async function createCharge(formData: FormData) {
   const { profile } = await requireStaff();
@@ -44,6 +60,20 @@ export async function createCharge(formData: FormData) {
     patientId,
     metadata: { amount_cents: Math.round(amountReais * 100) },
   });
+
+  const patient = await patientContact(supabase, patientId);
+  if (patient) {
+    await notifyPatientEmail(supabase, {
+      organizationId: profile.organization_id,
+      patientId,
+      patientEmail: patient.email,
+      patientName: patient.full_name,
+      templateKey: "charge_pending",
+      relatedType: "charge",
+      relatedId: charge.id,
+      variables: { amount: brl(Math.round(amountReais * 100)) },
+    });
+  }
 
   redirect("/financeiro");
 }
@@ -85,6 +115,19 @@ export async function markChargePaid(chargeId: string) {
     action: "COBRANCA_PAGA_MANUAL",
     patientId: charge.patient_id,
   });
+
+  const patient = await patientContact(supabase, charge.patient_id);
+  if (patient) {
+    await notifyPatientEmail(supabase, {
+      organizationId: profile.organization_id,
+      patientId: charge.patient_id,
+      patientEmail: patient.email,
+      patientName: patient.full_name,
+      templateKey: "payment_received",
+      relatedType: "charge",
+      relatedId: chargeId,
+    });
+  }
 
   revalidatePath("/financeiro");
 }

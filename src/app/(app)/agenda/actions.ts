@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import { notifyPatientEmail } from "@/lib/messages";
 
 export async function createAppointment(formData: FormData) {
   const { profile } = await requireStaff();
@@ -26,7 +27,7 @@ export async function createAppointment(formData: FormData) {
   const startsAt = new Date(`${date}T${time}:00`);
   const endsAt = new Date(startsAt.getTime() + durationMin * 60_000);
 
-  const { error } = await supabase.from("appointments").insert({
+  const { data: appt, error } = await supabase.from("appointments").insert({
     organization_id: profile.organization_id,
     patient_id: patientId,
     psychologist_id: psychologistId,
@@ -37,12 +38,34 @@ export async function createAppointment(formData: FormData) {
     status: "awaiting_confirmation",
     price_cents: Math.round(priceReais * 100),
     created_by: profile.id,
-  });
+  }).select("id").single();
 
   if (error) {
     // 23P01 = exclusion_violation — conflito de horário (psicólogo ou sala).
     const code = error.code === "23P01" ? "conflict" : "save";
     redirect(`/agenda/novo?error=${code}`);
+  }
+
+  const { data: patient } = await supabase
+    .from("patients")
+    .select("full_name, email")
+    .eq("id", patientId)
+    .single();
+
+  if (patient) {
+    await notifyPatientEmail(supabase, {
+      organizationId: profile.organization_id,
+      patientId,
+      patientEmail: patient.email,
+      patientName: patient.full_name,
+      templateKey: "appointment_confirmation",
+      relatedType: "appointment",
+      relatedId: appt.id,
+      variables: {
+        date: startsAt.toLocaleDateString("pt-BR"),
+        time: time.slice(0, 5),
+      },
+    });
   }
 
   revalidatePath("/agenda");
