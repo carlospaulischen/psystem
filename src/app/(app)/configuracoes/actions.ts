@@ -44,7 +44,7 @@ export async function inviteStaff(
     email,
     {
       data: { full_name: fullName },
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${origin}/auth/callback?next=/nova-senha`,
     },
   );
 

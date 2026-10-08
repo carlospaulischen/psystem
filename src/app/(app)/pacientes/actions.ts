@@ -2,8 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/audit";
 
 export async function createPatient(formData: FormData) {
@@ -120,6 +122,67 @@ export async function addRecordVersion(
 
   revalidatePath(`/pacientes/${patientId}`);
   return null;
+}
+
+// Convite de acesso ao portal do paciente: cria o usuário Auth (convite
+// por e-mail → ele define a senha) e vincula em patient_accounts.
+export async function invitePatientPortal(patientId: string) {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const { data: patient } = await supabase
+    .from("patients")
+    .select("email, full_name")
+    .eq("id", patientId)
+    .single();
+  if (!patient?.email) return;
+
+  const { data: existing } = await supabase
+    .from("patient_accounts")
+    .select("patient_id")
+    .eq("patient_id", patientId)
+    .maybeSingle();
+  if (existing) return;
+
+  const origin =
+    (await headers()).get("origin") ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    "http://localhost:3000";
+  const admin = createAdminClient();
+
+  const { data: invite, error } = await admin.auth.admin.inviteUserByEmail(
+    patient.email,
+    {
+      data: { full_name: patient.full_name },
+      redirectTo: `${origin}/auth/callback?next=/portal`,
+    },
+  );
+
+  let userId = invite?.user?.id;
+  // Se o e-mail já existe no Auth, vincula o usuário existente.
+  if (error?.message?.includes("already been registered")) {
+    const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
+    userId = list?.users.find((u) => u.email === patient.email)?.id;
+  }
+  if (!userId) {
+    console.error("[portal] invite:", error?.message);
+    return;
+  }
+
+  await admin.from("patient_accounts").insert({
+    patient_id: patientId,
+    user_id: userId,
+  });
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "patient",
+    resourceId: patientId,
+    action: "PACIENTE_PORTAL_CONVIDADO",
+    patientId,
+  });
+
+  revalidatePath(`/pacientes/${patientId}`);
 }
 
 export async function updatePatient(patientId: string, formData: FormData) {

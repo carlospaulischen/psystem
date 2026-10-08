@@ -20,10 +20,12 @@ export async function getSessionProfile() {
 }
 
 // Guard para páginas da área interna.
+// Sem profile → usuário de portal (paciente), manda para /portal.
+// Profile inativo/bloqueado → login (acesso revogado, dados preservados).
 export async function requireStaff() {
   const session = await getSessionProfile();
-  if (!session?.profile || session.profile.status !== "active") {
-    redirect("/login");
-  }
+  if (!session) redirect("/login");
+  if (!session.profile) redirect("/portal");
+  if (session.profile.status !== "active") redirect("/login");
   return session as { user: NonNullable<typeof session.user>; profile: Profile };
 }

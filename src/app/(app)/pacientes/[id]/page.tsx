@@ -12,9 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants, Button } from "@/components/ui/button";
 import { ClinicalRecordPanel } from "./clinical-record-panel";
 import { PatientActions } from "./patient-actions";
+import { invitePatientPortal } from "../actions";
 import type { Appointment, Charge } from "@/types";
 
 function formatBRL(cents: number) {
@@ -43,7 +44,12 @@ export default async function PacienteDetailPage({
 
   if (!patient) notFound();
 
-  const [{ data: appointments }, { data: charges }, { data: record }] =
+  const [
+    { data: appointments },
+    { data: charges },
+    { data: record },
+    { data: portalAccount },
+  ] =
     await Promise.all([
       supabase
         .from("appointments")
@@ -63,6 +69,11 @@ export default async function PacienteDetailPage({
       supabase
         .from("clinical_records")
         .select("id, status")
+        .eq("patient_id", id)
+        .maybeSingle(),
+      supabase
+        .from("patient_accounts")
+        .select("patient_id")
         .eq("patient_id", id)
         .maybeSingle(),
     ]);
@@ -93,6 +104,17 @@ export default async function PacienteDetailPage({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {portalAccount ? (
+            <StatusBadge status="portal_active" />
+          ) : (
+            patient.email && (
+              <form action={invitePatientPortal.bind(null, patient.id)}>
+                <Button type="submit" variant="outline" size="sm">
+                  Convidar para o portal
+                </Button>
+              </form>
+            )
+          )}
           <StatusBadge status={patient.status} />
           <Link
             href={`/pacientes/${patient.id}/editar`}

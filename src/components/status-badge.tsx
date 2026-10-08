@@ -14,6 +14,8 @@ const STYLES: Record<string, { label: string; className: string }> = {
   cancelled: { label: "Cancelada", className: "bg-red-500/15 text-red-700 dark:text-red-400" },
   no_show: { label: "Faltou", className: "bg-orange-500/15 text-orange-700 dark:text-orange-400" },
   blocked: { label: "Bloqueado", className: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400" },
+  // portal
+  portal_active: { label: "Portal vinculado", className: "bg-violet-500/15 text-violet-700 dark:text-violet-400" },
   // access requests
   open: { label: "Aberta", className: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
   in_analysis: { label: "Em análise", className: "bg-sky-500/15 text-sky-700 dark:text-sky-400" },

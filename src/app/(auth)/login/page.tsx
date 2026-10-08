@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { login } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; sent?: string }>;
 }) {
   const params = await searchParams;
 
@@ -54,7 +55,15 @@ export default async function LoginPage({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Senha</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Senha</Label>
+                <Link
+                  href="/recuperar"
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Esqueci minha senha
+                </Link>
+              </div>
               <Input
                 id="password"
                 name="password"
@@ -64,6 +73,12 @@ export default async function LoginPage({
               />
             </div>
 
+            {params.sent && (
+              <p className="text-sm text-emerald-600">
+                Se o e-mail existir na base, você receberá o link de
+                redefinição.
+              </p>
+            )}
             {params.error && (
               <p className="text-sm text-destructive">
                 Não foi possível autenticar. Verifique suas credenciais.
