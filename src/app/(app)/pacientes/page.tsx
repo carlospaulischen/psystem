@@ -14,16 +14,29 @@ import {
 } from "@/components/ui/table";
 import type { Patient } from "@/types";
 
-export default async function PacientesPage() {
+export default async function PacientesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   await requireStaff();
   const supabase = await createClient();
+  const { q } = await searchParams;
+  const term = q?.trim();
 
-  const { data: patients } = await supabase
+  let query = supabase
     .from("patients")
     .select("id, full_name, phone, email, status")
     .order("full_name")
-    .limit(200)
-    .returns<Patient[]>();
+    .limit(200);
+
+  if (term) {
+    query = query.or(
+      `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`,
+    );
+  }
+
+  const { data: patients } = await query.returns<Patient[]>();
 
   return (
     <div>
@@ -31,7 +44,9 @@ export default async function PacientesPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Pacientes</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {patients?.length ?? 0} cadastrado(s)
+            {term
+              ? `${patients?.length ?? 0} resultado(s) para "${term}"`
+              : `${patients?.length ?? 0} cadastrado(s)`}
           </p>
         </div>
         <Link href="/pacientes/novo" className={buttonVariants()}>

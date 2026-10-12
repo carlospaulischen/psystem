@@ -24,14 +24,34 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { logout } from "@/app/(auth)/login/actions";
 
-const NAV = [
-  { href: "/dashboard", label: "Início", icon: LayoutDashboard },
-  { href: "/agenda", label: "Agenda", icon: CalendarDays },
-  { href: "/pacientes", label: "Pacientes", icon: Users },
-  { href: "/financeiro", label: "Financeiro", icon: Wallet },
-  { href: "/documentos", label: "Documentos", icon: FileText },
-  { href: "/auditoria", label: "Auditoria", icon: ScrollText, adminOnly: true },
-  { href: "/configuracoes", label: "Configurações", icon: Settings },
+const NAV_GROUPS = [
+  {
+    label: "Principal",
+    items: [
+      { href: "/dashboard", label: "Início", icon: LayoutDashboard },
+      { href: "/agenda", label: "Agenda", icon: CalendarDays },
+      { href: "/pacientes", label: "Pacientes", icon: Users },
+    ],
+  },
+  {
+    label: "Gestão",
+    items: [
+      { href: "/financeiro", label: "Financeiro", icon: Wallet },
+      { href: "/documentos", label: "Documentos", icon: FileText },
+    ],
+  },
+  {
+    label: "Administração",
+    items: [
+      {
+        href: "/auditoria",
+        label: "Auditoria",
+        icon: ScrollText,
+        adminOnly: true,
+      },
+      { href: "/configuracoes", label: "Configurações", icon: Settings },
+    ],
+  },
 ];
 
 const ROLE_LABEL: Record<string, string> = {
@@ -77,25 +97,38 @@ export function AppSidebar({
         </p>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 px-3">
-        {NAV.filter(
-          (item) => !item.adminOnly || profile.role === "clinic_admin",
-        ).map((item) => {
-          const active = pathname.startsWith(item.href);
+      <nav className="flex flex-1 flex-col px-3">
+        {NAV_GROUPS.map((group) => {
+          const items = group.items.filter(
+            (item) => !item.adminOnly || profile.role === "clinic_admin",
+          );
+          if (items.length === 0) return null;
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-              )}
-            >
-              <item.icon className="size-4 shrink-0" />
-              {item.label}
-            </Link>
+            <div key={group.label} className="mt-5 first:mt-1">
+              <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
+                {group.label}
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {items.map((item) => {
+                  const active = pathname.startsWith(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                        active
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                      )}
+                    >
+                      <item.icon className="size-4 shrink-0" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
       </nav>
