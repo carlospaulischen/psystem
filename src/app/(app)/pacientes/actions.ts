@@ -61,6 +61,86 @@ export async function createPatient(formData: FormData) {
   redirect(`/pacientes/${patient.id}`);
 }
 
+export type ImportResult = {
+  imported: number;
+  errors: { line: number; name: string; reason: string }[];
+};
+
+// Importação em lote via CSV (modelo em /pacientes/importar/modelo).
+// Separador ';'. Colunas: nome;email;telefone;cpf;data_nascimento;observacoes.
+// Somente 'nome' é obrigatório; linhas inválidas são ignoradas e reportadas.
+export async function importPatientsCsv(
+  _prev: ImportResult | null,
+  formData: FormData,
+): Promise<ImportResult> {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const file = formData.get("csv_file") as File | null;
+  if (!file || file.size === 0) {
+    return { imported: 0, errors: [{ line: 0, name: "-", reason: "Nenhum arquivo enviado." }] };
+  }
+
+  const text = (await file.text()).replace(/^﻿/, "");
+  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
+  const result: ImportResult = { imported: 0, errors: [] };
+
+  // Primeira linha é o cabeçalho do modelo — pula.
+  const rows = lines.slice(1);
+
+  for (const [i, raw] of rows.entries()) {
+    const lineNo = i + 2; // linha real no arquivo (1 = cabeçalho)
+    const cells = raw.split(";").map((c) => c.trim().replace(/^"|"$/g, ""));
+    const [name, email, phone, cpf, birth, notes] = cells;
+
+    if (!name) {
+      result.errors.push({ line: lineNo, name: "(vazio)", reason: "Nome é obrigatório." });
+      continue;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      result.errors.push({ line: lineNo, name, reason: `E-mail inválido: "${email}".` });
+      continue;
+    }
+    let birthDate: string | null = null;
+    if (birth) {
+      const m = birth.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (m) birthDate = `${m[3]}-${m[2]}-${m[1]}`;
+      else if (/^\d{4}-\d{2}-\d{2}$/.test(birth)) birthDate = birth;
+      else {
+        result.errors.push({ line: lineNo, name, reason: `Data inválida: "${birth}" (use DD/MM/AAAA).` });
+        continue;
+      }
+    }
+
+    const { error } = await supabase.from("patients").insert({
+      organization_id: profile.organization_id,
+      full_name: name,
+      email: email || null,
+      phone: phone || null,
+      cpf: cpf || null,
+      birth_date: birthDate,
+      admin_notes: notes || null,
+      created_by: profile.id,
+    });
+
+    if (error) {
+      result.errors.push({ line: lineNo, name, reason: "Falha ao salvar no banco." });
+      continue;
+    }
+    result.imported += 1;
+  }
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "patient",
+    action: "PACIENTES_IMPORTADOS_CSV",
+    metadata: { imported: result.imported, errors: result.errors.length },
+  });
+
+  revalidatePath("/pacientes");
+  return result;
+}
+
 // Cria registro de atendimento (versão 1) via função do banco que
 // valida vínculo psicólogo-paciente (create_record_entry — ET-004).
 export async function addRecordEntry(

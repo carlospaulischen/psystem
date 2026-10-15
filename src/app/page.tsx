@@ -116,6 +116,9 @@ export default function Home() {
             />
           </Link>
           <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
+            <Link href="/clinicas" className="hover:text-foreground">
+              Para clínicas
+            </Link>
             <a href="#funcionalidades" className="hover:text-foreground">
               Funcionalidades
             </a>

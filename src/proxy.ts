@@ -6,7 +6,13 @@ import { NextResponse, type NextRequest } from "next/server";
 // A autorização fina (perfil/vínculo/recurso) acontece no banco via RLS —
 // aqui fazemos apenas o gate de autenticação.
 
-const PUBLIC_PATHS = ["/login", "/recuperar", "/auth/callback", "/auth/confirm"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/recuperar",
+  "/auth/callback",
+  "/auth/confirm",
+  "/clinicas",
+];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

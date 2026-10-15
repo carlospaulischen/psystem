@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
@@ -49,10 +49,19 @@ export default async function PacientesPage({
               : `${patients?.length ?? 0} cadastrado(s)`}
           </p>
         </div>
-        <Link href="/pacientes/novo" className={buttonVariants()}>
-          <Plus className="size-4" />
-          Novo paciente
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/pacientes/importar"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            <Upload className="size-4" />
+            Importar CSV
+          </Link>
+          <Link href="/pacientes/novo" className={buttonVariants()}>
+            <Plus className="size-4" />
+            Novo paciente
+          </Link>
+        </div>
       </header>
 
       <div className="mt-6 rounded-xl border bg-card">
