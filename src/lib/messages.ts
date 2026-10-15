@@ -36,6 +36,7 @@ const TEMPLATES: Record<
 // Envia e-mail ao paciente e registra em message_logs (status sent|failed).
 // Falha de envio não quebra o fluxo principal — fica registrada no log.
 export async function notifyPatientEmail(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any, any, any>,
   params: {
     organizationId: string;
