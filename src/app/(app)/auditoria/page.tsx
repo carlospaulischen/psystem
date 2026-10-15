@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Download } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
+import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import {
   Card,
@@ -54,10 +57,21 @@ export default async function AuditoriaPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Auditoria</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Trilha imutável das ações sensíveis — últimos 100 eventos.
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Auditoria</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Trilha imutável das ações sensíveis — últimos 100 eventos.
+          </p>
+        </div>
+        <Link
+          href="/auditoria/export"
+          className={buttonVariants({ variant: "outline" })}
+        >
+          <Download className="size-4" />
+          Exportar CSV
+        </Link>
+      </div>
 
       <Card className="mt-6">
         <CardHeader>

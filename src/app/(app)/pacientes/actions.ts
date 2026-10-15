@@ -202,6 +202,15 @@ export async function updatePatient(patientId: string, formData: FormData) {
         }
       : null;
 
+  // Consentimento LGPD: marcado → grava timestamp/versão (preserva a
+  // data original se já havia); desmarcado → revoga.
+  const consentGiven = formData.get("consent") === "on";
+  const { data: current } = await supabase
+    .from("patients")
+    .select("consent_at")
+    .eq("id", patientId)
+    .single();
+
   const { error } = await supabase
     .from("patients")
     .update({
@@ -212,6 +221,12 @@ export async function updatePatient(patientId: string, formData: FormData) {
       email: (formData.get("email") as string) || null,
       admin_notes: (formData.get("admin_notes") as string) || null,
       guardian,
+      consent_at: consentGiven
+        ? (current?.consent_at ?? new Date().toISOString())
+        : null,
+      consent_version: consentGiven
+        ? (current?.consent_at ? undefined : "v1")
+        : null,
     })
     .eq("id", patientId);
 
@@ -229,6 +244,73 @@ export async function updatePatient(patientId: string, formData: FormData) {
 
   revalidatePath(`/pacientes/${patientId}`);
   redirect(`/pacientes/${patientId}`);
+}
+
+// Anexos administrativos — bucket privado 'patient-files', pasta por org.
+export async function uploadAttachment(patientId: string, formData: FormData) {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) return;
+
+  const path = `${profile.organization_id}/${patientId}/${crypto.randomUUID()}-${file.name}`;
+
+  const { error: upError } = await supabase.storage
+    .from("patient-files")
+    .upload(path, file, { contentType: file.type });
+
+  if (upError) {
+    console.error("[attachments] upload:", upError.message);
+    return;
+  }
+
+  await supabase.from("patient_attachments").insert({
+    organization_id: profile.organization_id,
+    patient_id: patientId,
+    file_path: path,
+    file_name: file.name,
+    mime_type: file.type || null,
+    size_bytes: file.size,
+    uploaded_by: profile.id,
+  });
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "patient_attachment",
+    resourceId: patientId,
+    action: "ANEXO_ENVIADO",
+    patientId,
+    metadata: { file_name: file.name },
+  });
+
+  revalidatePath(`/pacientes/${patientId}`);
+}
+
+export async function deleteAttachment(attachmentId: string, patientId: string) {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const { data: att } = await supabase
+    .from("patient_attachments")
+    .select("file_path, file_name")
+    .eq("id", attachmentId)
+    .single();
+  if (!att) return;
+
+  await supabase.storage.from("patient-files").remove([att.file_path]);
+  await supabase.from("patient_attachments").delete().eq("id", attachmentId);
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "patient_attachment",
+    resourceId: attachmentId,
+    action: "ANEXO_REMOVIDO",
+    patientId,
+    metadata: { file_name: att.file_name },
+  });
+
+  revalidatePath(`/pacientes/${patientId}`);
 }
 
 export async function updatePatientStatus(patientId: string, status: string) {

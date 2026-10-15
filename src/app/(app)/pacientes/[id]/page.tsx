@@ -15,7 +15,8 @@ import {
 import { buttonVariants, Button } from "@/components/ui/button";
 import { ClinicalRecordPanel } from "./clinical-record-panel";
 import { PatientActions } from "./patient-actions";
-import { invitePatientPortal } from "../actions";
+import { invitePatientPortal, uploadAttachment, deleteAttachment } from "../actions";
+import { Paperclip, Trash2, Upload } from "lucide-react";
 import type { Appointment, Charge } from "@/types";
 
 function formatBRL(cents: number) {
@@ -49,6 +50,7 @@ export default async function PacienteDetailPage({
     { data: charges },
     { data: record },
     { data: portalAccount },
+    { data: attachments },
   ] =
     await Promise.all([
       supabase
@@ -76,10 +78,25 @@ export default async function PacienteDetailPage({
         .select("patient_id")
         .eq("patient_id", id)
         .maybeSingle(),
+      supabase
+        .from("patient_attachments")
+        .select("id, file_name, file_path, size_bytes, created_at")
+        .eq("patient_id", id)
+        .order("created_at", { ascending: false }),
     ]);
 
   const responsible = patient.links?.find(
     (l: { status: string }) => l.status === "active",
+  );
+
+  // URLs assinadas (1h) para download — bucket é privado.
+  const attachmentsWithUrl = await Promise.all(
+    (attachments ?? []).map(async (att) => {
+      const { data } = await supabase.storage
+        .from("patient-files")
+        .createSignedUrl(att.file_path, 3600);
+      return { ...att, url: data?.signedUrl ?? null };
+    }),
   );
 
   return (
@@ -131,6 +148,7 @@ export default async function PacienteDetailPage({
           <TabsTrigger value="dados">Dados</TabsTrigger>
           <TabsTrigger value="agenda">Agenda</TabsTrigger>
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="anexos">Anexos</TabsTrigger>
           <TabsTrigger value="prontuario">Prontuário</TabsTrigger>
         </TabsList>
 
@@ -160,6 +178,14 @@ export default async function PacienteDetailPage({
                 <div>
                   <dt className="text-muted-foreground">E-mail</dt>
                   <dd>{patient.email ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Consentimento LGPD</dt>
+                  <dd>
+                    {patient.consent_at
+                      ? `Assinado em ${new Date(patient.consent_at).toLocaleDateString("pt-BR")} (${patient.consent_version ?? "v1"})`
+                      : "Não registrado"}
+                  </dd>
                 </div>
                 {patient.admin_notes && (
                   <div className="sm:col-span-2">
@@ -247,6 +273,87 @@ export default async function PacienteDetailPage({
               ) : (
                 <p className="py-4 text-sm text-muted-foreground">
                   Nenhuma cobrança registrada.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="anexos" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Anexos</CardTitle>
+              <CardDescription>
+                Documentos enviados, autorizações e arquivos administrativos.
+                Armazenamento privado por organização.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form
+                action={uploadAttachment.bind(null, patient.id)}
+                className="mb-4 flex items-center gap-2"
+              >
+                <input
+                  type="file"
+                  name="file"
+                  required
+                  className="text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground"
+                />
+                <Button type="submit" size="sm" variant="outline">
+                  <Upload className="size-4" />
+                  Enviar
+                </Button>
+              </form>
+
+              {attachmentsWithUrl.length > 0 ? (
+                <ul className="divide-y divide-border text-sm">
+                  {attachmentsWithUrl.map((att) => (
+                    <li
+                      key={att.id}
+                      className="flex items-center justify-between gap-3 py-2.5"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Paperclip className="size-4 shrink-0 text-muted-foreground" />
+                        {att.url ? (
+                          <a
+                            href={att.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="truncate font-medium hover:text-primary hover:underline"
+                          >
+                            {att.file_name}
+                          </a>
+                        ) : (
+                          <span className="truncate font-medium">
+                            {att.file_name}
+                          </span>
+                        )}
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {att.size_bytes
+                            ? `${(att.size_bytes / 1024).toFixed(0)} KB`
+                            : ""}
+                          {" · "}
+                          {new Date(att.created_at).toLocaleDateString("pt-BR")}
+                        </span>
+                      </span>
+                      <form
+                        action={deleteAttachment.bind(null, att.id, patient.id)}
+                      >
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="ghost"
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </form>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="py-4 text-sm text-muted-foreground">
+                  Nenhum anexo enviado.
                 </p>
               )}
             </CardContent>

@@ -169,6 +169,25 @@ export default async function NovoAgendamentoPage({
               </div>
             </div>
 
+            <div className="grid gap-2">
+              <Label htmlFor="repeat_weeks">Recorrência semanal</Label>
+              <select
+                id="repeat_weeks"
+                name="repeat_weeks"
+                defaultValue="1"
+                className={selectClass}
+              >
+                <option value="1">Não repetir</option>
+                <option value="4">Repetir por 4 semanas</option>
+                <option value="8">Repetir por 8 semanas</option>
+                <option value="12">Repetir por 12 semanas</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Mesmo dia e horário a cada semana. Conflitos são pulados e
+                reportados ao final.
+              </p>
+            </div>
+
             {params.error && (
               <p className="text-sm text-destructive">
                 {params.error === "conflict"

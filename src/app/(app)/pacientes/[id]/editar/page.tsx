@@ -132,6 +132,24 @@ export default async function EditarPacientePage({
               </div>
             </div>
 
+            <label className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm">
+              <input
+                type="checkbox"
+                name="consent"
+                defaultChecked={!!patient.consent_at}
+                className="mt-0.5 size-4 accent-primary"
+              />
+              <span>
+                <span className="font-medium">Termo de consentimento LGPD</span>
+                <span className="block text-xs text-muted-foreground">
+                  O paciente autorizou o tratamento dos dados pessoais
+                  conforme a política de privacidade.
+                  {patient.consent_at &&
+                    ` Registrado em ${new Date(patient.consent_at).toLocaleDateString("pt-BR")} (${patient.consent_version ?? "v1"}).`}
+                </span>
+              </span>
+            </label>
+
             <div className="grid gap-2">
               <Label htmlFor="admin_notes">Observações administrativas</Label>
               <Textarea

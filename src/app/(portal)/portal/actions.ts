@@ -44,3 +44,23 @@ export async function createAccessRequest(formData: FormData) {
 
   revalidatePath("/portal");
 }
+
+// Confirmação de presença pelo portal — via RPC que garante: só a própria
+// consulta, e apenas de scheduled/awaiting_confirmation → confirmed.
+export async function confirmAppointment(appointmentId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/portal");
+
+  const { error } = await supabase.rpc("confirm_own_appointment", {
+    p_appointment_id: appointmentId,
+  });
+
+  if (error) {
+    console.error("[portal] confirm:", error.message);
+  }
+
+  revalidatePath("/portal");
+}

@@ -2,7 +2,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
-import { createAccessRequest } from "./actions";
+import { createAccessRequest, confirmAppointment } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,7 +69,7 @@ export default async function PortalPage() {
               {appointments.map((a) => (
                 <li
                   key={a.id}
-                  className="flex items-center justify-between py-2.5"
+                  className="flex items-center justify-between gap-3 py-2.5"
                 >
                   <span>
                     {new Date(a.starts_at).toLocaleString("pt-BR", {
@@ -83,7 +83,18 @@ export default async function PortalPage() {
                       {a.modality === "online" ? "Online" : "Presencial"}
                     </span>
                   </span>
-                  <StatusBadge status={a.status} />
+                  <span className="flex items-center gap-2">
+                    <StatusBadge status={a.status} />
+                    {["scheduled", "awaiting_confirmation"].includes(
+                      a.status,
+                    ) && (
+                      <form action={confirmAppointment.bind(null, a.id)}>
+                        <Button type="submit" size="sm" variant="outline">
+                          Confirmar
+                        </Button>
+                      </form>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>

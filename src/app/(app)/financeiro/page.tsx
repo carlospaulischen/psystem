@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
@@ -28,16 +28,26 @@ function formatBRL(cents: number) {
   });
 }
 
-export default async function FinanceiroPage() {
+export default async function FinanceiroPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   await requireStaff();
+  const { from, to } = await searchParams;
   const supabase = await createClient();
 
-  const { data: charges } = await supabase
+  let query = supabase
     .from("charges")
     .select("id, amount_cents, status, due_date, patient:patients(full_name)")
     .order("due_date", { ascending: false })
-    .limit(100)
-    .returns<(Charge & { patient: { full_name: string } | null })[]>();
+    .limit(200);
+  if (from) query = query.gte("due_date", from);
+  if (to) query = query.lte("due_date", to);
+
+  const { data: charges } = await query.returns<
+    (Charge & { patient: { full_name: string } | null })[]
+  >();
 
   const totals = (charges ?? []).reduce(
     (acc, c) => {
@@ -56,11 +66,53 @@ export default async function FinanceiroPage() {
             Cobranças e recebimentos
           </p>
         </div>
-        <Link href="/financeiro/nova" className={buttonVariants()}>
-          <Plus className="size-4" />
-          Nova cobrança
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/financeiro/export${from || to ? `?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) }).toString()}` : ""}`}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            <Download className="size-4" />
+            CSV
+          </Link>
+          <Link href="/financeiro/nova" className={buttonVariants()}>
+            <Plus className="size-4" />
+            Nova cobrança
+          </Link>
+        </div>
       </header>
+
+      <form className="mt-4 flex flex-wrap items-end gap-2" action="/financeiro">
+        <div>
+          <label htmlFor="from" className="mb-1 block text-xs text-muted-foreground">
+            Vencimento de
+          </label>
+          <input
+            id="from"
+            name="from"
+            type="date"
+            defaultValue={from}
+            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="to" className="mb-1 block text-xs text-muted-foreground">
+            até
+          </label>
+          <input
+            id="to"
+            name="to"
+            type="date"
+            defaultValue={to}
+            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+          />
+        </div>
+        <button
+          type="submit"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          Filtrar
+        </button>
+      </form>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {(["paid", "pending", "overdue"] as const).map((s) => (

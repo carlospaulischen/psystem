@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { InviteForm } from "./invite-form";
 import { MemberActions } from "./member-actions";
 import { AvailabilityPanel } from "./availability-panel";
+import { OrganizationForm, ProfileForm } from "./settings-forms";
 import {
   Card,
   CardContent,
@@ -41,6 +42,12 @@ export default async function ConfiguracoesPage() {
           >()
       : { data: null };
 
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("name, document, settings")
+    .eq("id", profile.organization_id)
+    .single();
+
   const { data: members } = await supabase
     .from("profiles")
     .select("id, full_name, role, status, crp")
@@ -64,19 +71,34 @@ export default async function ConfiguracoesPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Organização</CardTitle>
-            <CardDescription>Dados da clínica ou consultório.</CardDescription>
+            <CardDescription>
+              Dados da clínica ou consultório — usados em documentos e NFS-e.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 gap-3 text-sm">
-              <dt className="text-muted-foreground">Nome</dt>
-              <dd>{profile.organization?.name}</dd>
-              <dt className="text-muted-foreground">Tipo</dt>
-              <dd>
-                {profile.organization?.type === "clinic"
-                  ? "Clínica"
-                  : "Individual"}
-              </dd>
-            </dl>
+            {isAdmin && org ? (
+              <OrganizationForm
+                org={{
+                  name: org.name,
+                  document: org.document,
+                  settings:
+                    (org.settings as Record<string, string | null>) ?? {},
+                }}
+              />
+            ) : (
+              <dl className="grid grid-cols-2 gap-3 text-sm">
+                <dt className="text-muted-foreground">Nome</dt>
+                <dd>{org?.name}</dd>
+                <dt className="text-muted-foreground">CNPJ/CPF</dt>
+                <dd>{org?.document ?? "—"}</dd>
+                <dt className="text-muted-foreground">Tipo</dt>
+                <dd>
+                  {profile.organization?.type === "clinic"
+                    ? "Clínica"
+                    : "Individual"}
+                </dd>
+              </dl>
+            )}
           </CardContent>
         </Card>
 
@@ -152,20 +174,18 @@ export default async function ConfiguracoesPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Seu perfil</CardTitle>
+            <CardDescription>
+              {ROLE_LABEL[profile.role] ?? profile.role}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 gap-3 text-sm">
-              <dt className="text-muted-foreground">Nome</dt>
-              <dd>{profile.full_name}</dd>
-              <dt className="text-muted-foreground">Função</dt>
-              <dd>{ROLE_LABEL[profile.role] ?? profile.role}</dd>
-              {profile.crp && (
-                <>
-                  <dt className="text-muted-foreground">CRP</dt>
-                  <dd>{profile.crp}</dd>
-                </>
-              )}
-            </dl>
+            <ProfileForm
+              profile={{
+                full_name: profile.full_name,
+                crp: profile.crp,
+                role: profile.role,
+              }}
+            />
           </CardContent>
         </Card>
       </div>
