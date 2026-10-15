@@ -153,7 +153,7 @@ export async function invitePatientPortal(patientId: string) {
   const { data: invite, error } = await admin.auth.admin.inviteUserByEmail(
     patient.email,
     {
-      data: { full_name: patient.full_name },
+      data: { full_name: patient.full_name, app: "psystem" },
       redirectTo: `${origin}/auth/callback?next=/portal`,
     },
   );

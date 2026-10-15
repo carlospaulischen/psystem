@@ -43,7 +43,7 @@ export async function inviteStaff(
   const { data: invite, error } = await admin.auth.admin.inviteUserByEmail(
     email,
     {
-      data: { full_name: fullName },
+      data: { full_name: fullName, app: "psystem" },
       redirectTo: `${origin}/auth/callback?next=/nova-senha`,
     },
   );

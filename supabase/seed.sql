@@ -47,10 +47,12 @@ insert into auth.users (instance_id, id, aud, role, email, encrypted_password,
                         email_confirmed_at, created_at, updated_at,
                         confirmation_token, recovery_token, email_change,
                         email_change_token_new, email_change_token_current,
-                        reauthentication_token, phone_change, phone_change_token)
+                        reauthentication_token, phone_change, phone_change_token,
+                        raw_user_meta_data)
 select '00000000-0000-0000-0000-000000000000', u.id, 'authenticated', 'authenticated',
        u.email, extensions.crypt('demo123456', extensions.gen_salt('bf')),
-       now(), now(), now(), '', '', '', '', '', '', '', ''
+       now(), now(), now(), '', '', '', '', '', '', '', '',
+       '{"app": "psystem"}'::jsonb
 from (values
   ('10000000-0000-0000-0000-000000000001'::uuid, 'ana.psi@demo.com'),
   ('10000000-0000-0000-0000-000000000002'::uuid, 'bruna.psi@demo.com'),
