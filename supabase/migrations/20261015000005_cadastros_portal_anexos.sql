@@ -3,6 +3,8 @@
 -- 2. RPC para o paciente confirmar presença (portal não tem policy de UPDATE).
 -- 3. Anexos administrativos do paciente (storage privado + metadados).
 
+set search_path = psystem, public;
+
 alter table patients
   add column if not exists consent_at timestamptz,
   add column if not exists consent_version text;
@@ -12,7 +14,7 @@ create or replace function confirm_own_appointment(p_appointment_id uuid)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = psystem, public
 as $$
 begin
   update appointments

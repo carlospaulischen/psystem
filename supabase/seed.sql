@@ -13,6 +13,10 @@
 
 begin;
 
+-- Todos os objetos do app vivem no schema dedicado 'psystem'
+-- (o schema public é compartilhado com outro produto no mesmo projeto).
+set local search_path = psystem, public;
+
 -- Limpa usuários demo anteriores (criados via API) para seed determinístico.
 delete from auth.users
 where email in (

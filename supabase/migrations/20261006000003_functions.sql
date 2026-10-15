@@ -2,6 +2,8 @@
 -- psystem — Funções de domínio e auditoria
 -- ============================================================================
 
+set search_path = psystem, public;
+
 -- ---------------------------------------------------------------------------
 -- add_entry_version: única forma de escrever conteúdo em registro clínico.
 -- Cria a versão e avança latest_version atomicamente (ET-004/005).
@@ -18,7 +20,7 @@ create or replace function add_entry_version(
 returns record_entry_versions
 language plpgsql
 security definer
-set search_path = public
+set search_path = psystem, public
 as $$
 declare
   v_entry   record_entries;
@@ -75,7 +77,7 @@ create or replace function create_record_entry(
 returns record_entries
 language plpgsql
 security definer
-set search_path = public
+set search_path = psystem, public
 as $$
 declare
   v_record clinical_records;
@@ -122,7 +124,7 @@ create or replace function log_audit(
 returns bigint
 language plpgsql
 security definer
-set search_path = public
+set search_path = psystem, public
 as $$
 declare
   v_id bigint;

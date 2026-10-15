@@ -8,6 +8,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://psystem-seven.vercel.app",
+  ),
   title: {
     default: "PSYSTEM — Tecnologia para saúde mental",
     template: "%s · PSYSTEM",

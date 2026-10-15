@@ -5,7 +5,20 @@
 -- versionados, separação administrativo/clínico.
 -- ============================================================================
 
-create extension if not exists btree_gist;
+-- O projeto Supabase é compartilhado com outro produto que já usa o schema
+-- public. Tudo do psystem vive no schema dedicado 'psystem' — zero colisão.
+create schema if not exists psystem;
+set search_path = psystem, public;
+
+grant usage on schema psystem to anon, authenticated, service_role;
+alter default privileges in schema psystem
+  grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema psystem
+  grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema psystem
+  grant all on functions to anon, authenticated, service_role;
+
+create extension if not exists btree_gist with schema extensions;
 
 -- ---------------------------------------------------------------------------
 -- Enums

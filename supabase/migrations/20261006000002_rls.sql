@@ -8,20 +8,22 @@
 -- a resposta é denial em qualquer cliente (permissions-matrix.md §15).
 -- ============================================================================
 
+set search_path = psystem, public;
+
 -- ---------------------------------------------------------------------------
 -- Helpers (security definer evita recursão ao consultar profiles)
 -- ---------------------------------------------------------------------------
 
 create or replace function current_org_id()
 returns uuid language sql stable security definer
-set search_path = public as $$
+set search_path = psystem, public as $$
   select organization_id from profiles
   where id = auth.uid() and status = 'active'
 $$;
 
 create or replace function current_member_role()
 returns member_role language sql stable security definer
-set search_path = public as $$
+set search_path = psystem, public as $$
   select role from profiles
   where id = auth.uid() and status = 'active'
 $$;
@@ -29,7 +31,7 @@ $$;
 -- ABAC: usuário é o psicólogo responsável (vínculo ativo) por este paciente?
 create or replace function is_responsible_psychologist(p_patient_id uuid)
 returns boolean language sql stable security definer
-set search_path = public as $$
+set search_path = psystem, public as $$
   select exists (
     select 1 from patient_links
     where patient_id = p_patient_id
@@ -41,7 +43,7 @@ $$;
 -- Usuário autenticado é a conta de portal deste paciente?
 create or replace function is_patient_portal_user(p_patient_id uuid)
 returns boolean language sql stable security definer
-set search_path = public as $$
+set search_path = psystem, public as $$
   select exists (
     select 1 from patient_accounts
     where patient_id = p_patient_id
