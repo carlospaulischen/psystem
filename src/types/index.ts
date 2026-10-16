@@ -39,6 +39,8 @@ export interface Appointment {
   modality: "in_person" | "online";
   status: AppointmentStatus;
   price_cents: number | null;
+  meeting_link?: string | null;
+  admin_notes?: string | null;
   patient?: { full_name: string } | null;
 }
 

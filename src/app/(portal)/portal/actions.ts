@@ -45,6 +45,58 @@ export async function createAccessRequest(formData: FormData) {
   revalidatePath("/portal");
 }
 
+// Pedido de horário: o paciente sugere data/hora e o staff decide na agenda.
+// O vínculo ativo define o psicólogo — o paciente não escolhe nem inventa
+// horários que "travem" a agenda (a constraint de conflito não se aplica).
+export async function requestAppointment(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/portal");
+
+  const date = formData.get("date") as string;
+  const time = formData.get("time") as string;
+  const note = (formData.get("note") as string)?.trim() || null;
+  if (!date || !time) return;
+
+  const startsAt = new Date(`${date}T${time}:00`);
+  if (Number.isNaN(startsAt.getTime()) || startsAt < new Date()) return;
+
+  const { data: account } = await supabase
+    .from("patient_accounts")
+    .select("patient_id")
+    .eq("user_id", user.id)
+    .single();
+  if (!account) return;
+
+  const { data: patient } = await supabase
+    .from("patients")
+    .select("organization_id")
+    .eq("id", account.patient_id)
+    .single();
+  if (!patient) return;
+
+  const { data: link } = await supabase
+    .from("patient_links")
+    .select("psychologist_id")
+    .eq("patient_id", account.patient_id)
+    .eq("status", "active")
+    .single();
+  if (!link) return;
+
+  await supabase.from("appointment_requests").insert({
+    organization_id: patient.organization_id,
+    patient_id: account.patient_id,
+    psychologist_id: link.psychologist_id,
+    preferred_starts_at: startsAt.toISOString(),
+    note,
+    requested_by: user.id,
+  });
+
+  revalidatePath("/portal");
+}
+
 // Confirmação de presença pelo portal — via RPC que garante: só a própria
 // consulta, e apenas de scheduled/awaiting_confirmation → confirmed.
 export async function confirmAppointment(appointmentId: string) {

@@ -11,20 +11,24 @@ export async function createAppointment(formData: FormData) {
   const { profile } = await requireStaff();
   const supabase = await createClient();
 
-  const patientId = formData.get("patient_id") as string;
+  const kind = (formData.get("kind") as string) || "consultation";
+  const isBlock = kind === "block";
+  const patientId = (formData.get("patient_id") as string) || null;
   const psychologistId = formData.get("psychologist_id") as string;
   const roomId = (formData.get("room_id") as string) || null;
   const date = formData.get("date") as string;
   const time = formData.get("time") as string;
   const durationMin = Number(formData.get("duration_min") ?? 50);
   const modality = (formData.get("modality") as string) || "in_person";
+  const meetingLink = (formData.get("meeting_link") as string)?.trim() || null;
+  const adminNotes = (formData.get("admin_notes") as string)?.trim() || null;
   const priceReais = Number(formData.get("price") ?? 0);
   const repeatWeeks = Math.min(
     Math.max(Number(formData.get("repeat_weeks") ?? 1), 1),
     52,
   );
 
-  if (!patientId || !psychologistId || !date || !time) {
+  if (!psychologistId || !date || !time || (!isBlock && !patientId)) {
     redirect("/agenda/novo?error=required");
   }
 
@@ -32,14 +36,16 @@ export async function createAppointment(formData: FormData) {
 
   const buildRow = (start: Date) => ({
     organization_id: profile.organization_id,
-    patient_id: patientId,
+    patient_id: isBlock ? null : patientId,
     psychologist_id: psychologistId,
     room_id: modality === "in_person" ? roomId : null,
     starts_at: start.toISOString(),
     ends_at: new Date(start.getTime() + durationMin * 60_000).toISOString(),
     modality,
-    status: "awaiting_confirmation",
-    price_cents: Math.round(priceReais * 100),
+    status: isBlock ? "blocked" : "awaiting_confirmation",
+    price_cents: isBlock ? null : Math.round(priceReais * 100),
+    meeting_link: modality === "online" ? meetingLink : null,
+    admin_notes: adminNotes,
     created_by: profile.id,
   });
 
@@ -72,13 +78,15 @@ export async function createAppointment(formData: FormData) {
     }
   }
 
-  const { data: patient } = await supabase
-    .from("patients")
-    .select("full_name, email")
-    .eq("id", patientId)
-    .single();
+  const { data: patient } = patientId
+    ? await supabase
+        .from("patients")
+        .select("full_name, email")
+        .eq("id", patientId)
+        .single()
+    : { data: null };
 
-  if (patient) {
+  if (patient && patientId) {
     await notifyPatientEmail(supabase, {
       organizationId: profile.organization_id,
       patientId,
@@ -192,4 +200,71 @@ export async function updateAppointmentStatus(
   }
 
   revalidatePath("/agenda");
+}
+
+// Solicitação de horário feita pelo paciente no portal — o staff aprova
+// (cria o appointment real; conflito volta como aviso) ou recusa.
+export async function approveAppointmentRequest(requestId: string) {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const { data: req } = await supabase
+    .from("appointment_requests")
+    .select("patient_id, psychologist_id, preferred_starts_at, duration_min, status")
+    .eq("id", requestId)
+    .single();
+
+  if (!req || req.status !== "open") {
+    redirect("/agenda?notice=request:invalid");
+  }
+
+  const start = new Date(req.preferred_starts_at);
+  const { error } = await supabase.from("appointments").insert({
+    organization_id: profile.organization_id,
+    patient_id: req.patient_id,
+    psychologist_id: req.psychologist_id,
+    starts_at: start.toISOString(),
+    ends_at: new Date(start.getTime() + req.duration_min * 60_000).toISOString(),
+    modality: "in_person",
+    status: "awaiting_confirmation",
+    created_by: profile.id,
+  });
+
+  if (error) {
+    redirect(
+      error.code === "23P01"
+        ? "/agenda?notice=request:conflict"
+        : "/agenda?notice=request:error",
+    );
+  }
+
+  await supabase
+    .from("appointment_requests")
+    .update({
+      status: "accepted",
+      decided_by: profile.id,
+      decided_at: new Date().toISOString(),
+    })
+    .eq("id", requestId);
+
+  revalidatePath("/agenda");
+  redirect("/agenda?notice=request:accepted");
+}
+
+export async function rejectAppointmentRequest(requestId: string) {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  await supabase
+    .from("appointment_requests")
+    .update({
+      status: "rejected",
+      decided_by: profile.id,
+      decided_at: new Date().toISOString(),
+    })
+    .eq("id", requestId)
+    .eq("status", "open");
+
+  revalidatePath("/agenda");
+  redirect("/agenda?notice=request:rejected");
 }

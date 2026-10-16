@@ -66,18 +66,28 @@ export default async function NovoAgendamentoPage({
         </CardHeader>
         <CardContent>
           <form action={createAppointment} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="kind">Tipo</Label>
+              <select id="kind" name="kind" defaultValue="consultation" className={selectClass}>
+                <option value="consultation">Consulta</option>
+                <option value="block">Bloqueio de horário (almoço, reunião…)</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Bloqueio ocupa o horário do psicólogo sem gerar consulta.
+              </p>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="patient_id">Paciente *</Label>
                 <select
                   id="patient_id"
                   name="patient_id"
-                  required
                   defaultValue={params.paciente ?? ""}
                   className={selectClass}
                 >
-                  <option value="" disabled>
-                    Selecione
+                  <option value="">
+                    — Somente para consulta —
                   </option>
                   {(patients ?? []).map((p) => (
                     <option key={p.id} value={p.id}>
@@ -165,6 +175,29 @@ export default async function NovoAgendamentoPage({
                   min={0}
                   step="0.01"
                   placeholder="200.00"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="meeting_link">Link da sala virtual</Label>
+                <Input
+                  id="meeting_link"
+                  name="meeting_link"
+                  type="url"
+                  placeholder="https://meet.google.com/…"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Somente para consultas online — aparece no portal do paciente.
+                </p>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="admin_notes">Observação interna</Label>
+                <Input
+                  id="admin_notes"
+                  name="admin_notes"
+                  placeholder="Motivo do bloqueio, detalhes…"
                 />
               </div>
             </div>
