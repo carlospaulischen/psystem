@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import {
   updateMyProfile,
   updateOrganization,
+  updateSchedulingPolicy,
   type InviteState,
 } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -133,6 +134,76 @@ export function ProfileForm({
       <div className="flex justify-end">
         <Button type="submit" disabled={pending}>
           {pending ? "Salvando…" : "Salvar perfil"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+const checkClass =
+  "size-4 rounded border-input accent-primary";
+
+// Política de reagendamento — vale para a organização ativa
+// (o mesmo profissional pode ter regras diferentes em cada org).
+export function SchedulingPolicyForm({
+  policy,
+}: {
+  policy: {
+    reschedule_enabled: boolean;
+    reschedule_min_hours: number;
+    reschedule_within_availability: boolean;
+  };
+}) {
+  const [state, formAction, pending] = useActionState<InviteState, FormData>(
+    updateSchedulingPolicy,
+    null,
+  );
+
+  return (
+    <form action={formAction} className="grid gap-4">
+      <label className="flex items-center gap-2.5 text-sm">
+        <input
+          type="checkbox"
+          name="enabled"
+          defaultChecked={policy.reschedule_enabled}
+          className={checkClass}
+        />
+        Permitir que a recepção/administração remarque minhas consultas
+      </label>
+
+      <div className="grid gap-2 sm:max-w-56">
+        <Label htmlFor="min_hours">Antecedência mínima (horas)</Label>
+        <Input
+          id="min_hours"
+          name="min_hours"
+          type="number"
+          min={0}
+          max={720}
+          defaultValue={policy.reschedule_min_hours}
+        />
+        <p className="text-xs text-muted-foreground">
+          0 = sem limite. Ex.: 24 impede remarcação a menos de 24h da consulta.
+        </p>
+      </div>
+
+      <label className="flex items-center gap-2.5 text-sm">
+        <input
+          type="checkbox"
+          name="within_availability"
+          defaultChecked={policy.reschedule_within_availability}
+          className={checkClass}
+        />
+        Só permitir reagendamento dentro dos meus horários de atendimento
+      </label>
+
+      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+      {state?.ok && (
+        <p className="text-sm text-emerald-600">Política atualizada.</p>
+      )}
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={pending}>
+          {pending ? "Salvando…" : "Salvar política"}
         </Button>
       </div>
     </form>

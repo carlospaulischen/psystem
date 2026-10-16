@@ -23,7 +23,7 @@
 
 | # | Item | Notas |
 |---|------|-------|
-| X1 | **Multi-organização** (psicólogo com pacientes particulares + clínica) | Andressa (16/10): hoje 1 usuário = 1 org. Caminho recomendado: tabela `organization_members` (N:N) + seletor de contexto na UI + RLS por contexto ativo. `org_type 'individual'` já existe. NFS-e sai naturalmente separada (CNPJ da clínica vs. do profissional). Alternativa rejeitada: flag "particular" no paciente — expõe dados ao admin da clínica e prende dados no tenant errado |
+| X1 | ~~**Multi-organização**~~ ✅ | Feito 16/10: `organization_members` N:N, contexto ativo via `switch_organization()`, `create_own_practice()` para consultório individual, seletor na sidebar, convite vira vínculo para usuário existente. Bônus: grants por coluna em `profiles` fecharam bug de auto-promoção de role |
 
 ## Produto — gaps vs. concorrentes (PsicoManager / AnaM)
 

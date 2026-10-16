@@ -126,13 +126,62 @@ export async function rescheduleAppointment(
 
   const { data: current } = await supabase
     .from("appointments")
-    .select("patient_id")
+    .select("patient_id, psychologist_id, starts_at")
     .eq("id", appointmentId)
     .single();
   if (!current) return { error: "Agendamento não encontrado." };
 
   const startsAt = new Date(`${date}T${time}:00`);
   const endsAt = new Date(startsAt.getTime() + durationMin * 60_000);
+
+  // Política de reagendamento do profissional dono da consulta.
+  // O próprio psicólogo remarca livremente; recepção/admin seguem a regra.
+  if (current.psychologist_id !== profile.id) {
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select(
+        "reschedule_enabled, reschedule_min_hours, reschedule_within_availability",
+      )
+      .eq("organization_id", profile.organization_id)
+      .eq("user_id", current.psychologist_id)
+      .single();
+
+    if (member && !member.reschedule_enabled) {
+      return { error: "Este profissional não permite reagendamento." };
+    }
+
+    if (member && member.reschedule_min_hours > 0) {
+      const deadline =
+        new Date(current.starts_at).getTime() -
+        member.reschedule_min_hours * 3_600_000;
+      if (Date.now() > deadline) {
+        return {
+          error: `Reagendamento permitido somente até ${member.reschedule_min_hours}h antes da consulta.`,
+        };
+      }
+    }
+
+    if (member?.reschedule_within_availability) {
+      const weekday = startsAt.getDay();
+      const startHm = `${time.slice(0, 5)}`;
+      const endHm = endsAt.toTimeString().slice(0, 5);
+      const { data: slots } = await supabase
+        .from("availability")
+        .select("start_time, end_time")
+        .eq("psychologist_id", current.psychologist_id)
+        .eq("weekday", weekday);
+      const fits = (slots ?? []).some(
+        (s) =>
+          s.start_time.slice(0, 5) <= startHm && s.end_time.slice(0, 5) >= endHm,
+      );
+      if (!fits) {
+        return {
+          error:
+            "Este profissional só permite reagendamento dentro dos horários de atendimento dele.",
+        };
+      }
+    }
+  }
 
   const { error } = await supabase
     .from("appointments")

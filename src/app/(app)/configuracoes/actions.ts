@@ -267,6 +267,41 @@ export async function updateMyProfile(
   return { ok: true };
 }
 
+// Política de reagendamento do próprio membro na org ativa.
+export async function updateSchedulingPolicy(
+  _prev: InviteState,
+  formData: FormData,
+): Promise<InviteState> {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const enabled = formData.get("enabled") === "on";
+  const minHours = Number(formData.get("min_hours") ?? 0);
+  const withinAvailability = formData.get("within_availability") === "on";
+
+  const { error } = await supabase.rpc("update_my_scheduling_policy", {
+    p_enabled: enabled,
+    p_min_hours: Number.isFinite(minHours) ? minHours : 0,
+    p_within_availability: withinAvailability,
+  });
+
+  if (error) {
+    console.error("[settings] reschedule policy:", error.message);
+    return { error: "Não foi possível salvar." };
+  }
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "profile",
+    resourceId: profile.id,
+    action: "POLITICA_REAGENDAMENTO",
+    metadata: { enabled, min_hours: minHours, within_availability: withinAvailability },
+  });
+
+  revalidatePath("/configuracoes");
+  return { ok: true };
+}
+
 export async function updateMemberStatus(
   memberId: string,
   status: "active" | "inactive" | "blocked",

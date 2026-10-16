@@ -4,7 +4,11 @@ import { StatusBadge } from "@/components/status-badge";
 import { InviteForm } from "./invite-form";
 import { MemberActions } from "./member-actions";
 import { AvailabilityPanel } from "./availability-panel";
-import { OrganizationForm, ProfileForm } from "./settings-forms";
+import {
+  OrganizationForm,
+  ProfileForm,
+  SchedulingPolicyForm,
+} from "./settings-forms";
 import { createOwnPractice } from "../org-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,6 +81,18 @@ export default async function ConfiguracoesPage() {
   const hasOwnPractice = (myMemberships ?? []).some(
     (m) => m.organization?.type === "individual",
   );
+
+  const { data: myPolicy } =
+    profile.role === "psychologist"
+      ? await supabase
+          .from("organization_members")
+          .select(
+            "reschedule_enabled, reschedule_min_hours, reschedule_within_availability",
+          )
+          .eq("organization_id", profile.organization_id)
+          .eq("user_id", profile.id)
+          .single()
+      : { data: null };
 
   return (
     <div className="max-w-2xl">
@@ -168,6 +184,21 @@ export default async function ConfiguracoesPage() {
             </CardHeader>
             <CardContent>
               <AvailabilityPanel slots={availability ?? []} />
+            </CardContent>
+          </Card>
+        )}
+
+        {profile.role === "psychologist" && myPolicy && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Reagendamento</CardTitle>
+              <CardDescription>
+                Quem pode remarcar suas consultas e com quais limites. Você
+                sempre pode remarcar a própria agenda.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SchedulingPolicyForm policy={myPolicy} />
             </CardContent>
           </Card>
         )}
