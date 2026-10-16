@@ -19,11 +19,20 @@
 | A1 | **Logos vetoriais (SVG)** | PNGs perdem resolução; substituir em login, sidebar, landing, favicon |
 | A2 | **Reagendamento configurável por profissional** | Opções: nunca permitir / livre / somente em janelas específicas (ex.: até 24h antes, só mesmo horário, só X dias/semana). Envolve: coluna de política no profile, validação no `rescheduleAppointment`, UI em configurações |
 
+## Arquitetura — decisões de médio prazo
+
+| # | Item | Notas |
+|---|------|-------|
+| X1 | **Multi-organização** (psicólogo com pacientes particulares + clínica) | Andressa (16/10): hoje 1 usuário = 1 org. Caminho recomendado: tabela `organization_members` (N:N) + seletor de contexto na UI + RLS por contexto ativo. `org_type 'individual'` já existe. NFS-e sai naturalmente separada (CNPJ da clínica vs. do profissional). Alternativa rejeitada: flag "particular" no paciente — expõe dados ao admin da clínica e prende dados no tenant errado |
+
 ## Produto — gaps vs. concorrentes (PsicoManager / AnaM)
 
 | # | Item | Esforço |
 |---|------|---------|
-| P1 | **Agendamento pelo paciente** — portal solicita horário → staff confirma | Médio |
+| P1 | ~~**Agendamento pelo paciente**~~ ✅ | Feito 16/10 |
+| P2 | ~~**Bloqueio de horário**~~ ✅ | Feito 16/10 |
+| P3 | ~~**Visão mensal**~~ ✅ | Feito 16/10 |
+| P4 | ~~**Link de sala virtual**~~ ✅ | Feito 16/10 |
 | P2 | **Bloqueio de horário** — UI para `appointment` sem paciente (almoço, reunião) | Pequeno — schema já suporta |
 | P3 | **Visão mensal** da agenda | Médio |
 | P4 | **Link de sala virtual** (`meeting_link` na consulta, Google Meet/Zoom manual) | Pequeno |

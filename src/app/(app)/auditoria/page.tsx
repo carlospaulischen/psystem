@@ -43,7 +43,7 @@ interface AuditRow {
 // Trilha de auditoria (ET-017): somente admin vê o log completo da clínica.
 export default async function AuditoriaPage() {
   const { profile } = await requireStaff();
-  if (profile.role !== "clinic_admin") redirect("/dashboard");
+  if (!profile.is_org_admin) redirect("/dashboard");
 
   const supabase = await createClient();
   const { data: logs } = await supabase

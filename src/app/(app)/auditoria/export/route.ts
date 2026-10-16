@@ -10,7 +10,7 @@ function csvCell(v: unknown) {
 // Exportação da trilha de auditoria — somente admin (mesmo escopo da página).
 export async function GET() {
   const { profile } = await requireStaff();
-  if (profile.role !== "clinic_admin") {
+  if (!profile.is_org_admin) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 

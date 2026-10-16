@@ -56,11 +56,9 @@ export async function setNewPassword(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (user) {
-    await supabase
-      .from("profiles")
-      .update({ status: "active" })
-      .eq("id", user.id)
-      .eq("status", "invited");
+    // RPC ativa profile + memberships "invited" → "active" (update direto
+    // em profiles.status não é permitido — grants por coluna).
+    await supabase.rpc("activate_my_account");
   }
 
   redirect("/dashboard");

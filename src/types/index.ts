@@ -18,6 +18,16 @@ export interface Profile {
   full_name: string;
   crp: string | null;
   organization?: Organization;
+  is_org_admin?: boolean;
+  member_status?: string | null;
+}
+
+export interface OrganizationMembership {
+  organization_id: string;
+  role: MemberRole;
+  is_admin: boolean;
+  status: "invited" | "active" | "blocked" | "inactive";
+  organization?: { id: string; name: string; type: "clinic" | "individual" };
 }
 
 export type AppointmentStatus =

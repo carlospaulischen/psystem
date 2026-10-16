@@ -89,6 +89,11 @@ values
    'clinic_admin', 'active', 'Carlos Admin', null)
 on conflict (id) do nothing;
 
+-- Vínculos de organização (multi-org): espelha o contexto ativo dos profiles.
+insert into organization_members (organization_id, user_id, role, status)
+select organization_id, id, role, status from profiles
+on conflict (organization_id, user_id) do nothing;
+
 -- ---------------------------------------------------------------------------
 -- Pacientes (Dra. Ana: 1–7 / Dr. Bruno: 8–10)
 -- ---------------------------------------------------------------------------

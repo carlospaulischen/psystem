@@ -5,6 +5,8 @@ import { InviteForm } from "./invite-form";
 import { MemberActions } from "./member-actions";
 import { AvailabilityPanel } from "./availability-panel";
 import { OrganizationForm, ProfileForm } from "./settings-forms";
+import { createOwnPractice } from "../org-actions";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -22,7 +24,7 @@ const ROLE_LABEL: Record<string, string> = {
 export default async function ConfiguracoesPage() {
   const { profile } = await requireStaff();
   const supabase = await createClient();
-  const isAdmin = profile.role === "clinic_admin";
+  const isAdmin = profile.is_org_admin === true;
 
   const { data: availability } =
     profile.role === "psychologist"
@@ -49,19 +51,32 @@ export default async function ConfiguracoesPage() {
     .single();
 
   const { data: members } = await supabase
-    .from("profiles")
-    .select("id, full_name, role, status, crp")
+    .from("organization_members")
+    .select(
+      "user_id, role, is_admin, status, profile:profiles!user_id(full_name, crp)",
+    )
     .eq("organization_id", profile.organization_id)
     .order("created_at")
     .returns<
       {
-        id: string;
-        full_name: string;
+        user_id: string;
         role: string;
+        is_admin: boolean;
         status: string;
-        crp: string | null;
+        profile: { full_name: string; crp: string | null } | null;
       }[]
     >();
+
+  const { data: myMemberships } = await supabase
+    .from("organization_members")
+    .select("organization_id, organization:organizations(type)")
+    .eq("status", "active")
+    .returns<
+      { organization_id: string; organization: { type: string } | null }[]
+    >();
+  const hasOwnPractice = (myMemberships ?? []).some(
+    (m) => m.organization?.type === "individual",
+  );
 
   return (
     <div className="max-w-2xl">
@@ -113,13 +128,13 @@ export default async function ConfiguracoesPage() {
             <ul className="divide-y divide-border text-sm">
               {members?.map((m) => (
                 <li
-                  key={m.id}
+                  key={m.user_id}
                   className="flex items-center justify-between gap-3 py-2.5"
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium">
-                      {m.full_name}
-                      {m.id === profile.id && (
+                      {m.profile?.full_name}
+                      {m.user_id === profile.id && (
                         <span className="ml-1.5 text-xs text-muted-foreground">
                           (você)
                         </span>
@@ -127,13 +142,14 @@ export default async function ConfiguracoesPage() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {ROLE_LABEL[m.role] ?? m.role}
-                      {m.crp && ` · ${m.crp}`}
+                      {m.is_admin && m.role !== "clinic_admin" && " · Admin"}
+                      {m.profile?.crp && ` · ${m.profile.crp}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusBadge status={m.status} />
-                    {isAdmin && m.id !== profile.id && (
-                      <MemberActions memberId={m.id} status={m.status} />
+                    {isAdmin && m.user_id !== profile.id && (
+                      <MemberActions memberId={m.user_id} status={m.status} />
                     )}
                   </div>
                 </li>
@@ -152,6 +168,29 @@ export default async function ConfiguracoesPage() {
             </CardHeader>
             <CardContent>
               <AvailabilityPanel slots={availability ?? []} />
+            </CardContent>
+          </Card>
+        )}
+
+        {profile.role === "psychologist" && !hasOwnPractice && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Meu consultório particular
+              </CardTitle>
+              <CardDescription>
+                Atende pacientes particulares fora desta clínica? Crie seu
+                consultório — pacientes, agenda e notas fiscais ficam
+                separados e você alterna entre os contextos pela barra
+                lateral.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form action={createOwnPractice}>
+                <Button type="submit" variant="outline">
+                  Criar meu consultório
+                </Button>
+              </form>
             </CardContent>
           </Card>
         )}

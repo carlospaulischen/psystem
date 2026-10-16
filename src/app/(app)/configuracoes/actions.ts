@@ -18,7 +18,7 @@ export async function inviteStaff(
   formData: FormData,
 ): Promise<InviteState> {
   const { profile } = await requireStaff();
-  if (profile.role !== "clinic_admin") {
+  if (!profile.is_org_admin) {
     return { error: "Somente administradores podem convidar membros." };
   }
 
@@ -40,6 +40,64 @@ export async function inviteStaff(
     "http://localhost:3000";
   const admin = createAdminClient();
 
+  // Usuário já cadastrado (ex.: psicólogo com consultório próprio) —
+  // não recriamos a conta: só vinculamos à organização.
+  // profiles não guarda e-mail, então buscamos em auth.users via admin.
+  const { data: userList } = await admin.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+  const existingUser = userList?.users.find(
+    (u) => u.email?.toLowerCase() === email,
+  );
+
+  if (existingUser) {
+    const userId = existingUser.id;
+
+    // Conta de paciente convidada como staff: ganha um profile nesta org.
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!existingProfile) {
+      await admin.from("profiles").insert({
+        id: userId,
+        organization_id: profile.organization_id,
+        role: role as "psychologist" | "receptionist" | "clinic_admin",
+        status: "active",
+        full_name: fullName,
+        crp,
+      });
+    }
+
+    const { error: memberError } = await admin
+      .from("organization_members")
+      .upsert(
+        {
+          organization_id: profile.organization_id,
+          user_id: userId,
+          role: role as "psychologist" | "receptionist" | "clinic_admin",
+          status: "active",
+          invited_by: profile.id,
+        },
+        { onConflict: "organization_id,user_id" },
+      );
+    if (memberError) {
+      console.error("[staff] member:", memberError.message);
+      return { error: "Falha ao vincular o usuário à organização." };
+    }
+    await logAudit({
+      organizationId: profile.organization_id,
+      resourceType: "profile",
+      resourceId: userId,
+      action: "EQUIPE_VINCULADO",
+      metadata: { email, role },
+    });
+    revalidatePath("/configuracoes");
+    return { ok: true };
+  }
+
   const { data: invite, error } = await admin.auth.admin.inviteUserByEmail(
     email,
     {
@@ -49,9 +107,6 @@ export async function inviteStaff(
   );
 
   if (error || !invite.user) {
-    if (error?.message?.includes("already been registered")) {
-      return { error: "Já existe um usuário com esse e-mail." };
-    }
     console.error("[staff] invite:", error?.message);
     return { error: "Não foi possível enviar o convite." };
   }
@@ -70,6 +125,14 @@ export async function inviteStaff(
     console.error("[staff] profile:", profileError.message);
     return { error: "Falha ao criar o perfil do membro." };
   }
+
+  await admin.from("organization_members").insert({
+    organization_id: profile.organization_id,
+    user_id: invite.user.id,
+    role: role as "psychologist" | "receptionist" | "clinic_admin",
+    status: "invited",
+    invited_by: profile.id,
+  });
 
   await logAudit({
     organizationId: profile.organization_id,
@@ -118,7 +181,7 @@ export async function updateOrganization(
   formData: FormData,
 ): Promise<InviteState> {
   const { profile } = await requireStaff();
-  if (profile.role !== "clinic_admin") {
+  if (!profile.is_org_admin) {
     return { error: "Somente administradores." };
   }
 
@@ -209,13 +272,13 @@ export async function updateMemberStatus(
   status: "active" | "inactive" | "blocked",
 ) {
   const { profile } = await requireStaff();
-  if (profile.role !== "clinic_admin" || memberId === profile.id) return;
+  if (!profile.is_org_admin || memberId === profile.id) return;
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("profiles")
-    .update({ status })
-    .eq("id", memberId);
+  const { error } = await supabase.rpc("admin_set_member_status", {
+    p_user: memberId,
+    p_status: status,
+  });
 
   if (!error) {
     await logAudit({

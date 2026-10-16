@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { OrgSwitcher } from "@/components/org-switcher";
 import { logout } from "@/app/(auth)/login/actions";
 
 const NAV_GROUPS = [
@@ -72,12 +73,16 @@ function initials(name: string) {
 
 export function AppSidebar({
   profile,
+  orgs = [],
 }: {
   profile: {
     full_name: string;
     role: string;
+    is_org_admin?: boolean;
+    organization_id: string;
     organization?: { name: string } | null;
   };
+  orgs?: { id: string; name: string; type: string }[];
 }) {
   const pathname = usePathname();
 
@@ -92,15 +97,13 @@ export function AppSidebar({
           className="h-11 w-auto"
           priority
         />
-        <p className="mt-2 truncate text-xs text-sidebar-foreground/60">
-          {profile.organization?.name}
-        </p>
+        <OrgSwitcher orgs={orgs} activeOrgId={profile.organization_id} />
       </div>
 
       <nav className="flex flex-1 flex-col px-3">
         {NAV_GROUPS.map((group) => {
           const items = group.items.filter(
-            (item) => !item.adminOnly || profile.role === "clinic_admin",
+            (item) => !item.adminOnly || profile.is_org_admin,
           );
           if (items.length === 0) return null;
           return (
