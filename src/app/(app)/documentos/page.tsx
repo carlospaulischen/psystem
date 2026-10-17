@@ -4,6 +4,7 @@ import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { buttonVariants } from "@/components/ui/button";
+import { DOC_TYPE_LABEL } from "@/lib/doc-templates";
 import {
   Card,
   CardContent,
@@ -12,15 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export const DOC_TYPE_LABEL: Record<string, string> = {
-  declaration: "Declaração",
-  certificate: "Atestado",
-  report: "Relatório",
-  multiprofessional_report: "Relatório multiprofissional",
-  psychological_evaluation: "Avaliação psicológica",
-  referral: "Encaminhamento",
-  other: "Outro",
-};
+export { DOC_TYPE_LABEL };
 
 export default async function DocumentosPage() {
   const { profile } = await requireStaff();
@@ -90,7 +83,9 @@ export default async function DocumentosPage() {
                     >
                       <div className="min-w-0">
                         <p className="font-medium">
-                          {DOC_TYPE_LABEL[d.type] ?? d.type}
+                          {DOC_TYPE_LABEL[
+                            d.type as keyof typeof DOC_TYPE_LABEL
+                          ] ?? d.type}
                           <span className="ml-2 font-normal text-muted-foreground">
                             {d.patient?.full_name}
                           </span>

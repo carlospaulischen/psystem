@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createDocument } from "../actions";
-import { DOC_TYPE_LABEL } from "../page";
+import { DocTypeSelect } from "./doc-type-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +38,24 @@ export default async function NovoDocumentoPage({
     .map((l) => l.patient)
     .filter((p): p is { id: string; full_name: string } => !!p)
     .sort((a, b) => a.full_name.localeCompare(b.full_name));
+
+  // Atendimentos recentes do psicólogo — declarações de comparecimento
+  // puxam data/hora/modalidade reais da agenda.
+  const { data: appointments } = await supabase
+    .from("appointments")
+    .select("id, starts_at, modality, patient:patients(full_name)")
+    .eq("psychologist_id", profile.id)
+    .eq("status", "completed")
+    .order("starts_at", { ascending: false })
+    .limit(50)
+    .returns<
+      {
+        id: string;
+        starts_at: string;
+        modality: string;
+        patient: { full_name: string } | null;
+      }[]
+    >();
 
   return (
     <div className="max-w-2xl">
@@ -76,21 +94,34 @@ export default async function NovoDocumentoPage({
                   ))}
                 </select>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="type">Tipo *</Label>
-                <select
-                  id="type"
-                  name="type"
-                  required
-                  className="h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-                >
-                  {Object.entries(DOC_TYPE_LABEL).map(([v, l]) => (
-                    <option key={v} value={v}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <DocTypeSelect />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="appointment_id">Atendimento vinculado</Label>
+              <select
+                id="appointment_id"
+                name="appointment_id"
+                className="h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              >
+                <option value="">Nenhum</option>
+                {(appointments ?? []).map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {new Date(a.starts_at).toLocaleString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    — {a.patient?.full_name} (
+                    {a.modality === "online" ? "online" : "presencial"})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Para declarações de comparecimento, vincule ao atendimento
+                realizado — a declaração já sai com data e hora corretas.
+              </p>
             </div>
 
             <div className="grid gap-2">
@@ -123,11 +154,13 @@ export default async function NovoDocumentoPage({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="content">Conteúdo *</Label>
-              <Textarea id="content" name="content" rows={10} required />
+              <Label htmlFor="content">Conteúdo</Label>
+              <Textarea id="content" name="content" rows={10} />
               <p className="text-xs text-muted-foreground">
-                Emita apenas o necessário à finalidade — evite dados clínicos
-                desnecessários (ET-009).
+                Deixe vazio para usar o modelo do tipo escolhido (estrutura
+                recomendada pela Resolução CFP nº 06/2019). Emita apenas o
+                necessário à finalidade — evite dados clínicos desnecessários
+                (ET-009).
               </p>
             </div>
 

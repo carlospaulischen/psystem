@@ -50,7 +50,8 @@ export async function GET(_request: Request, { params }: RouteParams) {
   const author = Array.isArray(doc.author) ? doc.author[0] : doc.author;
 
   const pdf = await renderBrandedPdf({
-    title: DOC_TYPE_LABEL[doc.type] ?? "Documento",
+    title:
+      DOC_TYPE_LABEL[doc.type as keyof typeof DOC_TYPE_LABEL] ?? "Documento",
     subtitle: `Paciente: ${patient?.full_name ?? ""} · ${doc.purpose}`,
     sections: [{ body: issued.content }],
     signature: author

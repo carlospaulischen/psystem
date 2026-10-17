@@ -5,18 +5,16 @@ import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
-
-const DOC_TYPES = [
-  "declaration",
-  "certificate",
-  "report",
-  "multiprofessional_report",
-  "psychological_evaluation",
-  "referral",
-  "other",
-];
+import {
+  DOC_TYPES,
+  DOC_TEMPLATE_VERSION,
+  docTemplate,
+  type DocType,
+} from "@/lib/doc-templates";
 
 // Cria documento em rascunho com a versão 1 do conteúdo.
+// Se o conteúdo vier vazio, gera o modelo do tipo escolhido — declarações
+// vinculadas a um atendimento já saem com data/hora reais da agenda.
 // RLS garante: somente o psicólogo responsável pelo paciente.
 export async function createDocument(formData: FormData) {
   const { profile } = await requireStaff();
@@ -25,11 +23,48 @@ export async function createDocument(formData: FormData) {
   const patientId = formData.get("patient_id") as string;
   const type = formData.get("type") as string;
   const purpose = (formData.get("purpose") as string)?.trim();
-  const content = (formData.get("content") as string)?.trim();
+  const appointmentId = (formData.get("appointment_id") as string) || null;
+  let content = (formData.get("content") as string)?.trim();
 
-  if (!patientId || !DOC_TYPES.includes(type) || !purpose || !content) {
+  if (!patientId || !DOC_TYPES.includes(type as DocType) || !purpose) {
     redirect("/documentos/novo?error=required");
   }
+
+  // Vínculo com atendimento: valida que a consulta é do paciente e do
+  // psicólogo logado — RLS já barra acesso indevido, mas o vínculo precisa
+  // ser consistente (declaração só refere atendimento real do paciente).
+  let appointmentLabel: string | null = null;
+  if (appointmentId) {
+    const { data: appt } = await supabase
+      .from("appointments")
+      .select("patient_id, starts_at, modality")
+      .eq("id", appointmentId)
+      .single();
+    if (!appt || appt.patient_id !== patientId) {
+      redirect("/documentos/novo?error=save");
+    }
+    const start = new Date(appt.starts_at);
+    appointmentLabel =
+      start.toLocaleDateString("pt-BR") +
+      " às " +
+      start.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) +
+      (appt.modality === "online" ? " (online)" : " (presencial)");
+  }
+
+  if (!content) {
+    const { data: patient } = await supabase
+      .from("patients")
+      .select("full_name")
+      .eq("id", patientId)
+      .single();
+    content = docTemplate(type, {
+      patientName: patient?.full_name ?? "[paciente]",
+      psychologistName: profile.full_name,
+      crp: profile.crp,
+      appointmentLabel,
+    });
+  }
+  if (!content) redirect("/documentos/novo?error=required");
 
   const { data: doc, error } = await supabase
     .from("documents")
@@ -39,6 +74,8 @@ export async function createDocument(formData: FormData) {
       author_id: profile.id,
       type,
       purpose,
+      appointment_id: appointmentId,
+      template_version: DOC_TEMPLATE_VERSION,
       recipient_name: (formData.get("recipient_name") as string) || null,
       recipient_service:
         (formData.get("recipient_service") as string) || null,

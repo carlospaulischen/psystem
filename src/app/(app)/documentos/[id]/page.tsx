@@ -10,6 +10,7 @@ import {
   deliverDocument,
   invalidateDocument,
   issueDocument,
+  setDocumentReview,
 } from "../actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +43,7 @@ export default async function DocumentoPage({
   const { data: doc } = await supabase
     .from("documents")
     .select(
-      "*, patient:patients(full_name), versions:document_versions(version, content, issued_at, created_at), deliveries:document_deliveries(delivered_to, channel, delivered_at)",
+      "*, patient:patients(full_name), appointment:appointments(starts_at, modality), versions:document_versions(version, content, issued_at, created_at), deliveries:document_deliveries(delivered_to, channel, delivered_at)",
     )
     .eq("id", id)
     .single();
@@ -70,7 +71,8 @@ export default async function DocumentoPage({
       <header className="mt-3 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {DOC_TYPE_LABEL[doc.type] ?? doc.type}
+            {DOC_TYPE_LABEL[doc.type as keyof typeof DOC_TYPE_LABEL] ??
+              doc.type}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {doc.patient?.full_name} · criado por {profile.full_name}
@@ -106,6 +108,20 @@ export default async function DocumentoPage({
                   {doc.recipient_service && ` (${doc.recipient_service})`}
                 </dd>
               </div>
+              {doc.appointment && (
+                <div>
+                  <dt className="text-muted-foreground">Atendimento</dt>
+                  <dd>
+                    {new Date(
+                      doc.appointment.starts_at,
+                    ).toLocaleString("pt-BR")}{" "}
+                    ({doc.appointment.modality === "online"
+                      ? "online"
+                      : "presencial"}
+                    )
+                  </dd>
+                </div>
+              )}
             </dl>
           </CardContent>
         </Card>
@@ -186,9 +202,26 @@ export default async function DocumentoPage({
                 </form>
               </details>
 
-              <form action={issueDocument.bind(null, doc.id, latest.content)}>
-                <Button type="submit">Emitir documento</Button>
-              </form>
+              <div className="flex items-center justify-between gap-3">
+                <form
+                  action={setDocumentReview.bind(
+                    null,
+                    doc.id,
+                    doc.status === "draft",
+                  )}
+                >
+                  <Button type="submit" variant="outline" size="sm">
+                    {doc.status === "draft"
+                      ? "Marcar em revisão"
+                      : "Voltar a rascunho"}
+                  </Button>
+                </form>
+                <form
+                  action={issueDocument.bind(null, doc.id, latest.content)}
+                >
+                  <Button type="submit">Emitir documento</Button>
+                </form>
+              </div>
             </CardContent>
           </Card>
         )}
