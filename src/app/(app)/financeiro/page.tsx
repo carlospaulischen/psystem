@@ -68,6 +68,18 @@ export default async function FinanceiroPage({
         </div>
         <div className="flex items-center gap-2">
           <Link
+            href="/financeiro/repasses"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Repasses
+          </Link>
+          <Link
+            href="/financeiro/recibos"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Recibos IRPF
+          </Link>
+          <Link
             href={`/financeiro/export${from || to ? `?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) }).toString()}` : ""}`}
             className={buttonVariants({ variant: "outline" })}
           >

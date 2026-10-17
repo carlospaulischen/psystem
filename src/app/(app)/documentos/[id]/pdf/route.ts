@@ -19,7 +19,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
   const { data: doc } = await supabase
     .from("documents")
     .select(
-      "*, patient:patients(full_name), versions:document_versions(version, content, issued_at)",
+      "*, patient:patients(full_name), author:profiles!author_id(full_name, crp), versions:document_versions(version, content, issued_at)",
     )
     .eq("id", id)
     .single();
@@ -47,11 +47,19 @@ export async function GET(_request: Request, { params }: RouteParams) {
   const patient = Array.isArray(doc.patient)
     ? doc.patient[0]
     : doc.patient;
+  const author = Array.isArray(doc.author) ? doc.author[0] : doc.author;
 
   const pdf = await renderBrandedPdf({
     title: DOC_TYPE_LABEL[doc.type] ?? "Documento",
     subtitle: `Paciente: ${patient?.full_name ?? ""} · ${doc.purpose}`,
     sections: [{ body: issued.content }],
+    signature: author
+      ? {
+          name: author.full_name,
+          crp: author.crp,
+          hashInput: `${doc.id}|v${issued.version}|${issued.issued_at ?? ""}|${issued.content}`,
+        }
+      : undefined,
   });
 
   return new Response(new Uint8Array(pdf), {

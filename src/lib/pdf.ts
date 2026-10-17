@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import PDFDocument from "pdfkit";
 
@@ -13,6 +14,9 @@ export function renderBrandedPdf(input: {
   subtitle?: string;
   sections: { heading?: string; body: string }[];
   footer?: string;
+  // Bloco de assinatura do profissional: nome, CRP e hash de integridade
+  // do conteúdo emitido (qualquer alteração invalida o hash impresso).
+  signature?: { name: string; crp?: string | null; hashInput: string };
 }): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 56 });
@@ -64,6 +68,37 @@ export function renderBrandedPdf(input: {
         .fontSize(10.5)
         .fillColor(NAVY)
         .text(s.body, { lineGap: 4, align: "left" });
+    }
+
+    if (input.signature) {
+      const hash = createHash("sha256")
+        .update(input.signature.hashInput)
+        .digest("hex")
+        .slice(0, 16);
+
+      doc.moveDown(3);
+      doc
+        .moveTo(176, doc.y)
+        .lineTo(419, doc.y)
+        .strokeColor(NAVY)
+        .lineWidth(0.8)
+        .stroke();
+      doc.moveDown(0.6);
+      doc
+        .fontSize(10)
+        .fillColor(NAVY)
+        .text(input.signature.name, { align: "center" });
+      if (input.signature.crp) {
+        doc
+          .fontSize(8.5)
+          .fillColor(GRAY)
+          .text(input.signature.crp, { align: "center" });
+      }
+      doc.moveDown(0.4);
+      doc
+        .fontSize(7)
+        .fillColor(GRAY)
+        .text(`Integridade do documento: ${hash}`, { align: "center" });
     }
 
     doc.moveDown(3);

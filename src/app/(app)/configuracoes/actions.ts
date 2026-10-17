@@ -302,6 +302,37 @@ export async function updateSchedulingPolicy(
   return { ok: true };
 }
 
+// % de repasse do profissional — admin define por membro.
+export async function updateMemberCommission(
+  memberId: string,
+  formData: FormData,
+) {
+  const { profile } = await requireStaff();
+  if (!profile.is_org_admin) return;
+
+  const raw = (formData.get("pct") as string)?.trim();
+  const pct = raw === "" ? null : Number(raw);
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_set_member_commission", {
+    p_user: memberId,
+    p_pct: pct !== null && Number.isFinite(pct) ? pct : null,
+  });
+  if (error) {
+    console.error("[staff] commission:", error.message);
+    return;
+  }
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "profile",
+    resourceId: memberId,
+    action: "COMISSAO_ATUALIZADA",
+    metadata: { pct },
+  });
+  revalidatePath("/configuracoes");
+}
+
 export async function updateMemberStatus(
   memberId: string,
   status: "active" | "inactive" | "blocked",

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { InviteForm } from "./invite-form";
 import { MemberActions } from "./member-actions";
+import { updateMemberCommission } from "./actions";
 import { AvailabilityPanel } from "./availability-panel";
 import {
   OrganizationForm,
@@ -57,7 +58,7 @@ export default async function ConfiguracoesPage() {
   const { data: members } = await supabase
     .from("organization_members")
     .select(
-      "user_id, role, is_admin, status, profile:profiles!user_id(full_name, crp)",
+      "user_id, role, is_admin, status, commission_pct, profile:profiles!user_id(full_name, crp)",
     )
     .eq("organization_id", profile.organization_id)
     .order("created_at")
@@ -67,6 +68,7 @@ export default async function ConfiguracoesPage() {
         role: string;
         is_admin: boolean;
         status: string;
+        commission_pct: number | null;
         profile: { full_name: string; crp: string | null } | null;
       }[]
     >();
@@ -163,6 +165,31 @@ export default async function ConfiguracoesPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    {isAdmin && m.role === "psychologist" && (
+                      <form
+                        action={updateMemberCommission.bind(null, m.user_id)}
+                        className="flex items-center gap-1"
+                      >
+                        <input
+                          name="pct"
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={0.5}
+                          defaultValue={m.commission_pct ?? ""}
+                          placeholder="—"
+                          title="% de repasse"
+                          className="h-8 w-16 rounded-md border border-input bg-transparent px-2 text-right text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground">%</span>
+                        <button
+                          type="submit"
+                          className="rounded-md border border-input px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                        >
+                          Repasse
+                        </button>
+                      </form>
+                    )}
                     <StatusBadge status={m.status} />
                     {isAdmin && m.user_id !== profile.id && (
                       <MemberActions memberId={m.user_id} status={m.status} />

@@ -17,7 +17,7 @@
 | # | Item | Notas |
 |---|------|-------|
 | A1 | **Logos vetoriais (SVG)** | PNGs perdem resolução; substituir em login, sidebar, landing, favicon |
-| A2 | **Reagendamento configurável por profissional** | Opções: nunca permitir / livre / somente em janelas específicas (ex.: até 24h antes, só mesmo horário, só X dias/semana). Envolve: coluna de política no profile, validação no `rescheduleAppointment`, UI em configurações |
+| A2 | ~~**Reagendamento configurável por profissional**~~ ✅ | Feito 16/10: política na membership (por org), RPC própria, enforcement no reschedule, card em configurações |
 
 ## Arquitetura — decisões de médio prazo
 
