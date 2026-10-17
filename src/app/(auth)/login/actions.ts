@@ -16,6 +16,15 @@ export async function login(formData: FormData) {
     redirect(`/login?error=credentials&next=${encodeURIComponent(next)}`);
   }
 
+  // Usuário com TOTP ativo: a sessão nasce aal1 — exige o segundo fator.
+  const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (
+    aal.data?.nextLevel === "aal2" &&
+    aal.data.currentLevel !== aal.data.nextLevel
+  ) {
+    redirect(`/verificar-mfa?next=${encodeURIComponent(next)}`);
+  }
+
   redirect(next);
 }
 

@@ -5,6 +5,7 @@ import { InviteForm } from "./invite-form";
 import { MemberActions } from "./member-actions";
 import { updateMemberCommission } from "./actions";
 import { AvailabilityPanel } from "./availability-panel";
+import { MfaPanel } from "./mfa-panel";
 import {
   OrganizationForm,
   ProfileForm,
@@ -267,6 +268,18 @@ export default async function ConfiguracoesPage() {
             </CardContent>
           </Card>
         )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Segurança da conta</CardTitle>
+            <CardDescription>
+              Segundo fator de autenticação (TOTP) para este login.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MfaPanel />
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

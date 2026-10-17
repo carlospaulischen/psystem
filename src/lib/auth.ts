@@ -46,5 +46,16 @@ export async function requireStaff() {
   if (session.profile.member_status && session.profile.member_status !== "active") {
     redirect("/login");
   }
+
+  // MFA: sessão aal1 com fator verificado pendente → manda verificar.
+  const supabase = await createClient();
+  const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (
+    aal.data?.nextLevel === "aal2" &&
+    aal.data.currentLevel !== aal.data.nextLevel
+  ) {
+    redirect("/verificar-mfa");
+  }
+
   return session as { user: NonNullable<typeof session.user>; profile: Profile };
 }

@@ -36,9 +36,9 @@
 | P2 | **Bloqueio de horário** — UI para `appointment` sem paciente (almoço, reunião) | Pequeno — schema já suporta |
 | P3 | **Visão mensal** da agenda | Médio |
 | P4 | **Link de sala virtual** (`meeting_link` na consulta, Google Meet/Zoom manual) | Pequeno |
-| P5 | **Repasses/comissões** por profissional + relatório | Médio |
-| P6 | **Relatório IRPF** — recibos anuais por paciente | Pequeno |
-| P7 | **Assinatura do profissional** nos PDFs (nome + CRP + hash) | Pequeno |
+| P5 | ~~**Repasses/comissões**~~ ✅ | Feito 16/10: `commission_pct` na membership + `/financeiro/repasses` |
+| P6 | ~~**Relatório IRPF**~~ ✅ | Feito 16/10: `/financeiro/recibos` + recibo PDF anual |
+| P7 | ~~**Assinatura nos PDFs**~~ ✅ | Feito 16/10: nome + CRP + hash de integridade |
 | P8 | **Google Calendar sync** | Grande (OAuth) |
 | P9 | **Formulários/questionários** via portal (avaliações, escalas) | Grande |
 | P10 | **MFA** para contas staff | Médio |
