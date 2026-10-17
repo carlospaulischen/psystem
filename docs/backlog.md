@@ -52,7 +52,7 @@
 
 - Rotacionar o access token do Supabase (foi compartilhado em texto)
 - `npm audit`: 9 findings high pendentes de revisão
-- Domínio próprio (ex.: `psystem.com.br`) quando houver — Auth allow-list já suporta adicionar depois
+- ~~Domínio próprio~~ ✅ 2026-10-17: `psystem.app.br` via Registro.br + Cloudflare (CNAME flattening, DNS-only) + `NEXT_PUBLIC_SITE_URL` na Vercel + Auth allow-list atualizada (site_url continua do juntae — não mexer). Destrava: verificação OAuth Google (P8) e domínio verificado Resend (B4)
 
 ## Feito recentemente
 
