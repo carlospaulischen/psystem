@@ -142,3 +142,41 @@ export async function cancelAppointment(appointmentId: string) {
 
   revalidatePath("/portal");
 }
+
+// Resposta da anamnese pelo paciente — RLS garante: só a própria resposta,
+// só enquanto 'sent', e o status só pode ir para 'answered'.
+export async function submitAnamnesis(responseId: string, formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/portal");
+
+  const { data: response } = await supabase
+    .from("anamnesis_responses")
+    .select("questions")
+    .eq("id", responseId)
+    .single();
+  if (!response) return;
+
+  const questions = (response.questions ?? []) as { q: string }[];
+  const answers = questions.map((q, i) => ({
+    q: q.q,
+    a: ((formData.get(`a_${i}`) as string) ?? "").trim(),
+  }));
+
+  const { error } = await supabase
+    .from("anamnesis_responses")
+    .update({
+      answers,
+      status: "answered",
+      answered_at: new Date().toISOString(),
+    })
+    .eq("id", responseId);
+
+  if (error) {
+    console.error("[portal] anamnesis:", error.message);
+  }
+
+  revalidatePath("/portal");
+}

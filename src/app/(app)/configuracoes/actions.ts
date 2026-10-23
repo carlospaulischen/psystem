@@ -398,3 +398,58 @@ export async function updateMemberStatus(
 
   revalidatePath("/configuracoes");
 }
+
+// Modelo de anamnese do próprio psicólogo (na org ativa). Upsert manual:
+// atualiza o ativo existente ou cria — perguntas chegam como JSON.
+export async function saveAnamnesisTemplate(
+  _prev: InviteState,
+  formData: FormData,
+): Promise<InviteState> {
+  const { profile } = await requireStaff();
+  if (profile.role !== "psychologist") {
+    return { error: "Somente psicólogos." };
+  }
+  const supabase = await createClient();
+
+  let questions: unknown;
+  try {
+    questions = JSON.parse((formData.get("questions") as string) || "[]");
+    if (!Array.isArray(questions) || questions.length === 0) throw new Error();
+  } catch {
+    return { error: "Adicione pelo menos uma pergunta." };
+  }
+
+  const { data: existing } = await supabase
+    .from("anamnesis_templates")
+    .select("id")
+    .eq("organization_id", profile.organization_id)
+    .eq("psychologist_id", profile.id)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  const { error } = existing
+    ? await supabase
+        .from("anamnesis_templates")
+        .update({ questions, updated_at: new Date().toISOString() })
+        .eq("id", existing.id)
+    : await supabase.from("anamnesis_templates").insert({
+        organization_id: profile.organization_id,
+        psychologist_id: profile.id,
+        questions,
+      });
+
+  if (error) {
+    console.error("[settings] anamnesis:", error.message);
+    return { error: "Não foi possível salvar." };
+  }
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "anamnesis_template",
+    resourceId: existing?.id ?? undefined,
+    action: "ANAMNESE_MODELO_SALVO",
+  });
+
+  revalidatePath("/configuracoes");
+  return { ok: true };
+}

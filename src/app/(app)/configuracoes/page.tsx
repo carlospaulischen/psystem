@@ -5,7 +5,9 @@ import { InviteForm } from "./invite-form";
 import { MemberActions } from "./member-actions";
 import { updateMemberCommission } from "./actions";
 import { AvailabilityPanel } from "./availability-panel";
+import { AnamnesisEditor } from "./anamnesis-editor";
 import { MfaPanel } from "./mfa-panel";
+import { DEFAULT_ANAMNESIS, type AnamnesisQuestion } from "@/lib/anamnese";
 import {
   BillingPolicyForm,
   OrganizationForm,
@@ -96,6 +98,17 @@ export default async function ConfiguracoesPage() {
           .eq("organization_id", profile.organization_id)
           .eq("user_id", profile.id)
           .single()
+      : { data: null };
+
+  const { data: anamnesisTpl } =
+    profile.role === "psychologist"
+      ? await supabase
+          .from("anamnesis_templates")
+          .select("questions")
+          .eq("organization_id", profile.organization_id)
+          .eq("psychologist_id", profile.id)
+          .eq("is_active", true)
+          .maybeSingle()
       : { data: null };
 
   return (
@@ -228,6 +241,28 @@ export default async function ConfiguracoesPage() {
             </CardHeader>
             <CardContent>
               <SchedulingPolicyForm policy={myPolicy} />
+            </CardContent>
+          </Card>
+        )}
+
+        {profile.role === "psychologist" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Minha anamnese</CardTitle>
+              <CardDescription>
+                Perguntas que você envia ao paciente pelo portal. Adapte à
+                sua abordagem — anamneses já enviadas não mudam.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AnamnesisEditor
+                initial={
+                  ((anamnesisTpl?.questions as AnamnesisQuestion[] | null)
+                    ?.length
+                    ? (anamnesisTpl!.questions as AnamnesisQuestion[])
+                    : DEFAULT_ANAMNESIS)
+                }
+              />
             </CardContent>
           </Card>
         )}

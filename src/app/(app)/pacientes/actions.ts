@@ -415,3 +415,53 @@ export async function updatePatientStatus(patientId: string, status: string) {
 
   revalidatePath(`/pacientes/${patientId}`);
 }
+
+// Anamnese: envia o modelo do psicólogo (ou o padrão do sistema) como
+// snapshot — edições futuras do modelo não alteram o que já foi enviado.
+// Só o psicólogo responsável pode enviar (RLS valida de novo).
+export async function sendAnamnesis(patientId: string) {
+  const { profile } = await requireStaff();
+  if (profile.role !== "psychologist") return;
+
+  const supabase = await createClient();
+  const { DEFAULT_ANAMNESIS } = await import("@/lib/anamnese");
+
+  const { data: tpl } = await supabase
+    .from("anamnesis_templates")
+    .select("questions")
+    .eq("organization_id", profile.organization_id)
+    .eq("psychologist_id", profile.id)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  const tplQuestions = tpl?.questions as unknown[] | null;
+  const questions =
+    tplQuestions && tplQuestions.length ? tplQuestions : DEFAULT_ANAMNESIS;
+
+  const { data: response, error } = await supabase
+    .from("anamnesis_responses")
+    .insert({
+      organization_id: profile.organization_id,
+      patient_id: patientId,
+      psychologist_id: profile.id,
+      questions,
+      sent_by: profile.id,
+    })
+    .select("id")
+    .single();
+
+  if (error || !response) {
+    console.error("[anamnese] send:", error?.message);
+    redirect(`/pacientes/${patientId}?error=anamnese`);
+  }
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "anamnesis_response",
+    resourceId: response.id,
+    action: "ANAMNESE_ENVIADA",
+    patientId,
+  });
+
+  revalidatePath(`/pacientes/${patientId}`);
+}

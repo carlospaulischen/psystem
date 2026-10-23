@@ -7,6 +7,7 @@ import {
   createAccessRequest,
   confirmAppointment,
   requestAppointment,
+  submitAnamnesis,
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,7 @@ export default async function PortalPage({
     { data: charges },
     { data: requests },
     { data: apptRequests },
+    { data: anamneses },
   ] = await Promise.all([
       supabase
         .from("appointments")
@@ -66,6 +68,12 @@ export default async function PortalPage({
         .select("id, preferred_starts_at, status, note, created_at")
         .order("created_at", { ascending: false })
         .limit(10),
+      supabase
+        .from("anamnesis_responses")
+        .select("id, questions, status, sent_at")
+        .eq("status", "sent")
+        .order("sent_at", { ascending: false })
+        .limit(1),
     ]);
 
   return (
@@ -250,6 +258,70 @@ export default async function PortalPage({
           )}
         </CardContent>
       </Card>
+
+      {anamneses && anamneses.length > 0 && (
+        <Card className="mt-4 border-primary/40">
+          <CardHeader>
+            <CardTitle className="text-base">
+              Anamnese — questionário do seu psicólogo
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Suas respostas são confidenciais e vão direto para o
+              profissional responsável pelo seu atendimento.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form
+              action={submitAnamnesis.bind(null, anamneses[0].id)}
+              className="grid gap-4"
+            >
+              {(
+                (anamneses[0].questions ?? []) as {
+                  q: string;
+                  type: string;
+                }[]
+              ).map((q, i) => (
+                <div key={i} className="grid gap-2">
+                  <Label htmlFor={`a_${i}`}>
+                    {i + 1}. {q.q}
+                  </Label>
+                  {q.type === "yesno" ? (
+                    <div className="flex gap-4 text-sm">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name={`a_${i}`}
+                          value="Sim"
+                          required
+                        />
+                        Sim
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name={`a_${i}`}
+                          value="Não"
+                          required
+                        />
+                        Não
+                      </label>
+                    </div>
+                  ) : q.type === "long" ? (
+                    <Textarea id={`a_${i}`} name={`a_${i}`} rows={3} />
+                  ) : (
+                    <Input id={`a_${i}`} name={`a_${i}`} />
+                  )}
+                </div>
+              ))}
+              <div className="flex justify-end">
+                <Button type="submit" size="sm">
+                  Enviar respostas
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="mt-4">
         <CardHeader>

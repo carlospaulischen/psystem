@@ -15,7 +15,7 @@ import {
 import { buttonVariants, Button } from "@/components/ui/button";
 import { ClinicalRecordPanel } from "./clinical-record-panel";
 import { PatientActions } from "./patient-actions";
-import { invitePatientPortal, uploadAttachment, deleteAttachment } from "../actions";
+import { invitePatientPortal, uploadAttachment, deleteAttachment, sendAnamnesis } from "../actions";
 import { Paperclip, Trash2, Upload } from "lucide-react";
 import type { Appointment, Charge } from "@/types";
 
@@ -51,6 +51,7 @@ export default async function PacienteDetailPage({
     { data: record },
     { data: portalAccount },
     { data: attachments },
+    { data: anamneses },
   ] =
     await Promise.all([
       supabase
@@ -83,6 +84,13 @@ export default async function PacienteDetailPage({
         .select("id, file_name, file_path, size_bytes, created_at")
         .eq("patient_id", id)
         .order("created_at", { ascending: false }),
+      // RLS: devolve vazio para quem não é o psicólogo responsável.
+      supabase
+        .from("anamnesis_responses")
+        .select("id, status, sent_at, answered_at, questions, answers")
+        .eq("patient_id", id)
+        .order("sent_at", { ascending: false })
+        .limit(10),
     ]);
 
   const responsible = patient.links?.find(
@@ -149,6 +157,7 @@ export default async function PacienteDetailPage({
           <TabsTrigger value="agenda">Agenda</TabsTrigger>
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
           <TabsTrigger value="anexos">Anexos</TabsTrigger>
+          <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
           <TabsTrigger value="prontuario">Prontuário</TabsTrigger>
         </TabsList>
 
@@ -355,6 +364,86 @@ export default async function PacienteDetailPage({
                 <p className="py-4 text-sm text-muted-foreground">
                   Nenhum anexo enviado.
                 </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="anamnese" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Anamnese</CardTitle>
+              <CardDescription>
+                Questionário enviado ao paciente pelo portal. Conteúdo
+                clínico — visível apenas para o psicólogo responsável.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {profile.role === "psychologist" && record && (
+                <div>
+                  {portalAccount ? (
+                    <form action={sendAnamnesis.bind(null, patient.id)}>
+                      <Button type="submit" variant="outline" size="sm">
+                        Enviar anamnese ao paciente
+                      </Button>
+                    </form>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Convide o paciente para o portal para poder enviar a
+                      anamnese.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!anamneses || anamneses.length === 0 ? (
+                <p className="py-4 text-sm text-muted-foreground">
+                  {profile.role === "psychologist" && record
+                    ? "Nenhuma anamnese enviada ainda."
+                    : "Conteúdo clínico acessível apenas ao psicólogo responsável."}
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {anamneses.map((an) => (
+                    <li
+                      key={an.id}
+                      className="rounded-md border border-border p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          enviada em{" "}
+                          {new Date(an.sent_at).toLocaleDateString("pt-BR")}
+                          {an.answered_at &&
+                            ` · respondida em ${new Date(
+                              an.answered_at,
+                            ).toLocaleDateString("pt-BR")}`}
+                        </span>
+                        <StatusBadge
+                          status={
+                            an.status === "answered" ? "completed" : "open"
+                          }
+                        />
+                      </div>
+                      {an.status === "answered" &&
+                        Array.isArray(an.answers) && (
+                          <dl className="mt-3 space-y-3 border-t pt-3 text-sm">
+                            {(
+                              an.answers as { q: string; a: string }[]
+                            ).map((item, i) => (
+                              <div key={i}>
+                                <dt className="text-xs font-medium text-muted-foreground">
+                                  {item.q}
+                                </dt>
+                                <dd className="mt-0.5 whitespace-pre-wrap">
+                                  {item.a || "—"}
+                                </dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+                    </li>
+                  ))}
+                </ul>
               )}
             </CardContent>
           </Card>

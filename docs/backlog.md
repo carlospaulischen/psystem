@@ -46,7 +46,7 @@
 | P6 | ~~**Relatório IRPF**~~ ✅ | Feito 16/10: `/financeiro/recibos` + recibo PDF anual |
 | P7 | ~~**Assinatura nos PDFs**~~ ✅ | Feito 16/10: nome + CRP + hash de integridade |
 | P8 | **Google Calendar sync** | Grande (OAuth). Bloqueios externos: (1) credenciais no Google Cloud — projeto + Calendar API + tela de consentimento; (2) **domínio oficial** — exigido para verificação do app (sem ele, produção exibe "app não verificado" e limita a 100 usuários de teste). Dev/teste funciona sem domínio. Escopo `calendar.events`; evento sem nome de paciente (LGPD); fase 1 = sync 1 via PSYSTEM→Google + Meet automático |
-| P9 | **Formulários/questionários** via portal (avaliações, escalas) | Grande |
+| P9 | ~~**Anamnese** via portal~~ ✅ | Feito 23/10 (escopo da Andressa: só anamnese, não escalas): modelo padrão editável por psicólogo em Configurações (perguntas short/long/sim-não, reordenar/adicionar/remover), envio opcional pela ficha do paciente, snapshot de perguntas no envio, resposta pelo portal, RLS clínico (só psicólogo responsável + paciente; update do paciente restrito a `answers/status/answered_at` enquanto `sent`). Evolução futura: escalas validadas |
 | P10 | ~~**MFA**~~ ✅ | Feito 16/10: TOTP nativo do Supabase — ativação em Configurações, gate aal2 em `requireStaff` e no login |
 
 ## Importação CSV — evoluções
