@@ -51,8 +51,8 @@
 
 ## Importação CSV — evoluções
 
-- Coluna `psicologo` para vincular paciente ao profissional pelo nome
-- Dedupe por e-mail/CPF (atualmente importa duplicados)
+- ~~Coluna `psicologo` para vincular paciente ao profissional pelo nome~~ ✅ 23/10
+- ~~Dedupe por e-mail/CPF (atualmente importa duplicados)~~ ✅ 23/10 — dedupe no banco + dentro do arquivo; colunas mapeadas por cabeçalho (ordem livre, sinônimos); linhas duplicadas reportadas como "ignoradas"; psicólogo não encontrado importa sem vínculo com aviso
 
 ## Técnico / ops
 

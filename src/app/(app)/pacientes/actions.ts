@@ -64,11 +64,53 @@ export async function createPatient(formData: FormData) {
 export type ImportResult = {
   imported: number;
   errors: { line: number; name: string; reason: string }[];
+  skipped: { line: number; name: string; reason: string }[];
+  warnings: string[];
 };
 
+// Normaliza para comparação: minúsculas, sem acento, espaços colapsados.
+const norm = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+
+const onlyDigits = (s: string) => s.replace(/\D/g, "");
+
+// Mapeamento por cabeçalho — aceita colunas em qualquer ordem e sinônimos.
+const HEADER_ALIASES: Record<string, string> = {
+  nome: "name",
+  name: "name",
+  nome_completo: "name",
+  nome_do_paciente: "name",
+  paciente: "name",
+  email: "email",
+  "e-mail": "email",
+  telefone: "phone",
+  celular: "phone",
+  phone: "phone",
+  cpf: "cpf",
+  data_nascimento: "birth",
+  data_de_nascimento: "birth",
+  nascimento: "birth",
+  datanascimento: "birth",
+  observacoes: "notes",
+  observacao: "notes",
+  obs: "notes",
+  psicologo: "psychologist",
+  psicologa: "psychologist",
+  psicologo_responsavel: "psychologist",
+  profissional: "psychologist",
+  responsavel: "psychologist",
+};
+// Posicional para arquivos do modelo antigo (sem a coluna psicologo no meio).
+const POSITIONAL = ["name", "email", "phone", "cpf", "birth", "notes", "psychologist"];
+
 // Importação em lote via CSV (modelo em /pacientes/importar/modelo).
-// Separador ';'. Colunas: nome;email;telefone;cpf;data_nascimento;observacoes.
-// Somente 'nome' é obrigatório; linhas inválidas são ignoradas e reportadas.
+// Separador ';'. Somente 'nome' é obrigatório. Dedupes por e-mail/CPF
+// (banco + dentro do próprio arquivo); 'psicologo' vincula por nome.
 export async function importPatientsCsv(
   _prev: ImportResult | null,
   formData: FormData,
@@ -77,21 +119,60 @@ export async function importPatientsCsv(
   const supabase = await createClient();
 
   const file = formData.get("csv_file") as File | null;
+  const empty: ImportResult = { imported: 0, errors: [], skipped: [], warnings: [] };
   if (!file || file.size === 0) {
-    return { imported: 0, errors: [{ line: 0, name: "-", reason: "Nenhum arquivo enviado." }] };
+    return { ...empty, errors: [{ line: 0, name: "-", reason: "Nenhum arquivo enviado." }] };
   }
 
   const text = (await file.text()).replace(/^﻿/, "");
   const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
-  const result: ImportResult = { imported: 0, errors: [] };
+  const result: ImportResult = { imported: 0, errors: [], skipped: [], warnings: [] };
+  if (lines.length < 2) return result;
 
-  // Primeira linha é o cabeçalho do modelo — pula.
-  const rows = lines.slice(1);
+  // Cabeçalho → posições das colunas (célula vazia cai no posicional legado).
+  const headerCells = lines[0].split(";").map((c) => c.trim().replace(/^"|"$/g, ""));
+  const colIndex = new Map<string, number>();
+  headerCells.forEach((cell, i) => {
+    const key = HEADER_ALIASES[norm(cell).replace(/\s+/g, "_")];
+    if (key && !colIndex.has(key)) colIndex.set(key, i);
+  });
+  const hasHeader = colIndex.has("name");
+  const rows = hasHeader ? lines.slice(1) : lines;
+  const cellAt = (cells: string[], key: string, pos: number) =>
+    cells[colIndex.get(key) ?? pos] ?? "";
+
+  // Dedupe: cadastros existentes (e-mail minúsculo / CPF só dígitos).
+  const [{ data: existing }, { data: psychologists }] = await Promise.all([
+    supabase
+      .from("patients")
+      .select("email, cpf")
+      .eq("organization_id", profile.organization_id),
+    supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("role", "psychologist")
+      .eq("status", "active"),
+  ]);
+  const seenEmails = new Set(
+    (existing ?? []).map((p) => p.email?.toLowerCase()).filter(Boolean) as string[],
+  );
+  const seenCpfs = new Set(
+    (existing ?? []).map((p) => onlyDigits(p.cpf ?? "")).filter(Boolean) as string[],
+  );
+  const psychByName = new Map(
+    (psychologists ?? []).map((p) => [norm(p.full_name), p.id] as const),
+  );
 
   for (const [i, raw] of rows.entries()) {
-    const lineNo = i + 2; // linha real no arquivo (1 = cabeçalho)
+    const lineNo = i + (hasHeader ? 2 : 1);
     const cells = raw.split(";").map((c) => c.trim().replace(/^"|"$/g, ""));
-    const [name, email, phone, cpf, birth, notes] = cells;
+    const name = cellAt(cells, "name", 0);
+    const email = cellAt(cells, "email", 1);
+    const phone = cellAt(cells, "phone", 2);
+    const cpf = cellAt(cells, "cpf", 3);
+    const birth = cellAt(cells, "birth", 4);
+    const notes = cellAt(cells, "notes", 5);
+    const psychName = cellAt(cells, "psychologist", 6);
 
     if (!name) {
       result.errors.push({ line: lineNo, name: "(vazio)", reason: "Nome é obrigatório." });
@@ -112,29 +193,71 @@ export async function importPatientsCsv(
       }
     }
 
-    const { error } = await supabase.from("patients").insert({
-      organization_id: profile.organization_id,
-      full_name: name,
-      email: email || null,
-      phone: phone || null,
-      cpf: cpf || null,
-      birth_date: birthDate,
-      admin_notes: notes || null,
-      created_by: profile.id,
-    });
+    // Dedupe por e-mail ou CPF (qualquer um já cadastrado → pula).
+    const emailKey = email.toLowerCase();
+    const cpfKey = onlyDigits(cpf);
+    if ((emailKey && seenEmails.has(emailKey)) || (cpfKey && seenCpfs.has(cpfKey))) {
+      result.skipped.push({
+        line: lineNo,
+        name,
+        reason: `Já cadastrado (${seenEmails.has(emailKey) ? "e-mail" : "CPF"}).`,
+      });
+      continue;
+    }
 
-    if (error) {
+    const { data: patient, error } = await supabase
+      .from("patients")
+      .insert({
+        organization_id: profile.organization_id,
+        full_name: name,
+        email: email || null,
+        phone: phone || null,
+        cpf: cpf || null,
+        birth_date: birthDate,
+        admin_notes: notes || null,
+        created_by: profile.id,
+      })
+      .select("id")
+      .single();
+
+    if (error || !patient) {
       result.errors.push({ line: lineNo, name, reason: "Falha ao salvar no banco." });
       continue;
     }
+    if (emailKey) seenEmails.add(emailKey);
+    if (cpfKey) seenCpfs.add(cpfKey);
     result.imported += 1;
+
+    // Vínculo opcional pelo nome do psicólogo (coluna 'psicologo').
+    if (psychName) {
+      const psychId = psychByName.get(norm(psychName));
+      if (psychId) {
+        await supabase.from("patient_links").insert({
+          organization_id: profile.organization_id,
+          patient_id: patient.id,
+          psychologist_id: psychId,
+        });
+        await supabase.from("clinical_records").insert({
+          organization_id: profile.organization_id,
+          patient_id: patient.id,
+        });
+      } else {
+        result.warnings.push(
+          `Linha ${lineNo} — ${name}: psicólogo "${psychName}" não encontrado; paciente importado sem vínculo.`,
+        );
+      }
+    }
   }
 
   await logAudit({
     organizationId: profile.organization_id,
     resourceType: "patient",
     action: "PACIENTES_IMPORTADOS_CSV",
-    metadata: { imported: result.imported, errors: result.errors.length },
+    metadata: {
+      imported: result.imported,
+      skipped: result.skipped.length,
+      errors: result.errors.length,
+    },
   });
 
   revalidatePath("/pacientes");

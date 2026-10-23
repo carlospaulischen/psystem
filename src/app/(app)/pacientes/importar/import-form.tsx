@@ -35,7 +35,27 @@ export function ImportForm() {
             {result.imported > 0
               ? `${result.imported} paciente(s) importado(s) com sucesso.`
               : "Nenhum paciente importado."}
+            {result.skipped.length > 0 &&
+              ` ${result.skipped.length} ignorado(s) por já existirem.`}
           </p>
+          {result.skipped.length > 0 && (
+            <ul className="rounded-xl border bg-muted/40 p-4 text-sm">
+              {result.skipped.map((s) => (
+                <li key={s.line} className="text-muted-foreground">
+                  Linha {s.line} — {s.name}: {s.reason}
+                </li>
+              ))}
+            </ul>
+          )}
+          {result.warnings.length > 0 && (
+            <ul className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+              {result.warnings.map((w, i) => (
+                <li key={i} className="text-amber-700 dark:text-amber-400">
+                  {w}
+                </li>
+              ))}
+            </ul>
+          )}
           {result.errors.length > 0 && (
             <ul className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
               {result.errors.map((e) => (

@@ -31,7 +31,10 @@ export default async function ImportarPacientesPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Preencha no Excel ou Google Sheets. Somente a coluna{" "}
           <strong>nome</strong> é obrigatória — as demais podem ficar vazias.
-          Datas no formato <code>DD/MM/AAAA</code>.
+          Datas no formato <code>DD/MM/AAAA</code>. Na coluna{" "}
+          <strong>psicologo</strong>, escreva o nome do profissional como está
+          cadastrado — o paciente já entra vinculado a ele. Linhas com e-mail
+          ou CPF já existentes são ignoradas.
         </p>
         <a
           href="/pacientes/importar/modelo"
