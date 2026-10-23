@@ -302,6 +302,46 @@ export async function updateSchedulingPolicy(
   return { ok: true };
 }
 
+// Política de falta/cancelamento do próprio membro na org ativa:
+// cobrança em falta (integral/%/nada) + janela de cancelamento do paciente.
+export async function updateBillingPolicy(
+  _prev: InviteState,
+  formData: FormData,
+): Promise<InviteState> {
+  const { profile } = await requireStaff();
+  const supabase = await createClient();
+
+  const policy = (formData.get("noshow_policy") as string) || "full";
+  const pct = Number(formData.get("noshow_percent") ?? 100);
+  const cancelHours = Number(formData.get("cancel_min_hours") ?? 24);
+
+  const { error } = await supabase.rpc("update_my_billing_policy", {
+    p_noshow_policy: policy,
+    p_noshow_percent: Number.isFinite(pct) ? pct : 100,
+    p_cancel_min_hours: Number.isFinite(cancelHours) ? cancelHours : 24,
+  });
+
+  if (error) {
+    console.error("[settings] billing policy:", error.message);
+    return { error: "Não foi possível salvar." };
+  }
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "profile",
+    resourceId: profile.id,
+    action: "POLITICA_FALTA_CANCELAMENTO",
+    metadata: {
+      noshow_policy: policy,
+      noshow_percent: pct,
+      cancel_min_hours: cancelHours,
+    },
+  });
+
+  revalidatePath("/configuracoes");
+  return { ok: true };
+}
+
 // % de repasse do profissional — admin define por membro.
 export async function updateMemberCommission(
   memberId: string,

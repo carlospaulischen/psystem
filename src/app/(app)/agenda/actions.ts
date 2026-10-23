@@ -213,6 +213,95 @@ export async function rescheduleAppointment(
   return null;
 }
 
+// Falta (no_show): cria a cobrança conforme a política do psicólogo dono
+// da consulta — 'full' valor integral, 'percent' % do valor, 'none' nada.
+async function createNoShowCharge(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  profile: { id: string; organization_id: string },
+  appt: {
+    patient_id: string | null;
+    psychologist_id: string;
+    price_cents: number | null;
+    starts_at: string;
+  },
+  appointmentId: string,
+) {
+  if (!appt.patient_id || !appt.price_cents) return;
+
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("noshow_policy, noshow_percent")
+    .eq("organization_id", profile.organization_id)
+    .eq("user_id", appt.psychologist_id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  const policy = member?.noshow_policy ?? "full";
+  if (policy === "none") return;
+
+  const amount =
+    policy === "percent"
+      ? Math.round((appt.price_cents * (member?.noshow_percent ?? 100)) / 100)
+      : appt.price_cents;
+  if (amount <= 0) return;
+
+  // Se a consulta já tem cobrança (ou o status foi desfeito e refeito),
+  // não duplica.
+  const { data: existing } = await supabase
+    .from("charges")
+    .select("id")
+    .eq("appointment_id", appointmentId)
+    .maybeSingle();
+  if (existing) return;
+
+  const { data: charge } = await supabase
+    .from("charges")
+    .insert({
+      organization_id: profile.organization_id,
+      patient_id: appt.patient_id,
+      appointment_id: appointmentId,
+      amount_cents: amount,
+      status: "pending",
+      due_date: appt.starts_at.slice(0, 10),
+      created_by: profile.id,
+    })
+    .select("id")
+    .single();
+  if (!charge) return;
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "charge",
+    resourceId: charge.id,
+    action: "COBRANCA_FALTA",
+    patientId: appt.patient_id,
+    metadata: { appointment_id: appointmentId, policy, amount_cents: amount },
+  });
+
+  const { data: patient } = await supabase
+    .from("patients")
+    .select("full_name, email")
+    .eq("id", appt.patient_id)
+    .single();
+  if (patient) {
+    await notifyPatientEmail(supabase, {
+      organizationId: profile.organization_id,
+      patientId: appt.patient_id,
+      patientEmail: patient.email,
+      patientName: patient.full_name,
+      templateKey: "charge_pending",
+      relatedType: "charge",
+      relatedId: charge.id,
+      variables: {
+        amount: (amount / 100).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }),
+      },
+    });
+  }
+}
+
 export async function updateAppointmentStatus(
   appointmentId: string,
   status: string,
@@ -234,10 +323,13 @@ export async function updateAppointmentStatus(
     .from("appointments")
     .update({ status })
     .eq("id", appointmentId)
-    .select("patient_id")
+    .select("patient_id, psychologist_id, price_cents, starts_at")
     .single();
 
   if (!error && appt) {
+    if (status === "no_show") {
+      await createNoShowCharge(supabase, profile, appt, appointmentId);
+    }
     await logAudit({
       organizationId: profile.organization_id,
       resourceType: "appointment",

@@ -7,7 +7,7 @@
 | # | Item | Depende de |
 |---|------|-----------|
 | B1 | **Gateway de pagamento** (link Pix/boleto/cartão + webhook) | Escolha do provedor (Asaas, Mercado Pago, Stripe BR…) |
-| B2 | **NFS-e** + Receita Saúde | Escolha do provedor (FocusNFe, eNotas, PlugNotas…). Nota: emissão varia por município/enquadramento — integração não deve presumir emissor único; autônomo (org individual) e clínica já separam por tenant |
+| B2 | **NFS-e** + Receita Saúde | Escolha do provedor (FocusNFe, eNotas, PlugNotas…). Regras fixas (Andressa): emissão varia por município/enquadramento (tenant separa autônomo vs. clínica); **envio ao paciente NUNCA automático** — sempre confirmação do psicólogo. Colunas `sent_*` já criadas na migration 11 |
 | B3 | **WhatsApp** para lembretes/confirmações | API oficial é paga (Meta/Twilio/Z-API) |
 | B4 | **RESEND_API_KEY** real + domínio verificado | Hoje e-mails caem no fallback (`message_logs`) |
 | B5 | Landing page para "psicólogo em clínica compartilhada" | Decisão de mercado — RLS já suporta (admin vê tudo, profissional só o dele) |
@@ -24,6 +24,12 @@
 | # | Item | Notas |
 |---|------|-------|
 | X1 | ~~**Multi-organização**~~ ✅ | Feito 16/10: `organization_members` N:N, contexto ativo via `switch_organization()`, `create_own_practice()` para consultório individual, seletor na sidebar, convite vira vínculo para usuário existente. Bônus: grants por coluna em `profiles` fecharam bug de auto-promoção de role |
+
+## Contrato / jurídico
+
+| # | Item | Notas |
+|---|------|-------|
+| J1 | **Cláusula de política de cancelamento/falta no contrato de prestação de serviços** | A política configurável (migration 11) precisa constar no contrato que o paciente assina — evita contestação da cobrança por falta. Avaliar gerar o contrato como documento `consent_term` no fluxo de cadastro do paciente |
 
 ## Produto — gaps vs. concorrentes (PsicoManager / AnaM)
 

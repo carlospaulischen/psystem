@@ -116,3 +116,29 @@ export async function confirmAppointment(appointmentId: string) {
 
   revalidatePath("/portal");
 }
+
+// Cancelamento pelo paciente — a RPC valida a janela configurada pelo
+// psicólogo (cancel_min_hours). Fora da janela, o paciente fala com a clínica.
+export async function cancelAppointment(appointmentId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/portal");
+
+  const { error } = await supabase.rpc("cancel_own_appointment", {
+    p_appointment_id: appointmentId,
+  });
+
+  if (error) {
+    redirect(
+      `/portal?notice=${
+        error.message.includes("cancel_window_expired")
+          ? "cancel_window"
+          : "cancel_denied"
+      }`,
+    );
+  }
+
+  revalidatePath("/portal");
+}

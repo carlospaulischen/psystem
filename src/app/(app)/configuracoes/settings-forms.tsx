@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import {
+  updateBillingPolicy,
   updateMyProfile,
   updateOrganization,
   updateSchedulingPolicy,
@@ -195,6 +196,85 @@ export function SchedulingPolicyForm({
         />
         Só permitir reagendamento dentro dos meus horários de atendimento
       </label>
+
+      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+      {state?.ok && (
+        <p className="text-sm text-emerald-600">Política atualizada.</p>
+      )}
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={pending}>
+          {pending ? "Salvando…" : "Salvar política"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// Política de falta/cancelamento — por profissional, por org.
+export function BillingPolicyForm({
+  policy,
+}: {
+  policy: {
+    noshow_policy: string;
+    noshow_percent: number;
+    cancel_min_hours: number;
+  };
+}) {
+  const [state, formAction, pending] = useActionState<InviteState, FormData>(
+    updateBillingPolicy,
+    null,
+  );
+
+  return (
+    <form action={formAction} className="grid gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-2">
+          <Label htmlFor="noshow_policy">Cobrança quando o paciente falta</Label>
+          <select
+            id="noshow_policy"
+            name="noshow_policy"
+            defaultValue={policy.noshow_policy}
+            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+          >
+            <option value="full">Valor integral da sessão</option>
+            <option value="percent">Percentual do valor</option>
+            <option value="none">Não cobrar</option>
+          </select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="noshow_percent">Percentual (%)</Label>
+          <Input
+            id="noshow_percent"
+            name="noshow_percent"
+            type="number"
+            min={0}
+            max={100}
+            defaultValue={policy.noshow_percent}
+          />
+          <p className="text-xs text-muted-foreground">
+            Usado quando a opção acima é &quot;Percentual do valor&quot;.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-2 sm:max-w-56">
+        <Label htmlFor="cancel_min_hours">
+          Cancelamento pelo paciente (horas antes)
+        </Label>
+        <Input
+          id="cancel_min_hours"
+          name="cancel_min_hours"
+          type="number"
+          min={0}
+          max={720}
+          defaultValue={policy.cancel_min_hours}
+        />
+        <p className="text-xs text-muted-foreground">
+          O paciente só cancela pelo portal até X horas antes da consulta.
+          Padrão: 24h. Fora da janela, ele precisa falar com a clínica.
+        </p>
+      </div>
 
       {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
       {state?.ok && (

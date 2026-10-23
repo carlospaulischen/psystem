@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
 import {
+  cancelAppointment,
   createAccessRequest,
   confirmAppointment,
   requestAppointment,
@@ -21,12 +22,20 @@ import type { Appointment, Charge } from "@/types";
 
 // Portal do paciente — acesso apenas ao próprio contexto via RLS
 // (is_patient_portal_user). Sem qualquer dado clínico (ET-002).
-export default async function PortalPage() {
+export default async function PortalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/portal");
+
+  const params = await searchParams;
+
+  const { data: cancelHours } = await supabase.rpc("my_cancel_min_hours");
 
   const [
     { data: appointments },
@@ -72,9 +81,24 @@ export default async function PortalPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Meu portal</h1>
       </div>
 
+      {(params.notice === "cancel_window" ||
+        params.notice === "cancel_denied") && (
+        <p className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          {params.notice === "cancel_window"
+            ? `O cancelamento pelo portal só é permitido até ${cancelHours ?? 24}h antes da consulta. Fale com a clínica para desmarcar.`
+            : "Não foi possível cancelar esta consulta."}
+        </p>
+      )}
+
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-base">Próximas consultas</CardTitle>
+          {cancelHours != null && (
+            <p className="text-xs text-muted-foreground">
+              Você pode cancelar pelo portal até {cancelHours}h antes da
+              consulta.
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           {appointments && appointments.length > 0 ? (
@@ -114,6 +138,20 @@ export default async function PortalPage() {
                       <form action={confirmAppointment.bind(null, a.id)}>
                         <Button type="submit" size="sm" variant="outline">
                           Confirmar
+                        </Button>
+                      </form>
+                    )}
+                    {["scheduled", "awaiting_confirmation", "confirmed"].includes(
+                      a.status,
+                    ) && (
+                      <form action={cancelAppointment.bind(null, a.id)}>
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive"
+                        >
+                          Cancelar
                         </Button>
                       </form>
                     )}

@@ -7,6 +7,7 @@ import { updateMemberCommission } from "./actions";
 import { AvailabilityPanel } from "./availability-panel";
 import { MfaPanel } from "./mfa-panel";
 import {
+  BillingPolicyForm,
   OrganizationForm,
   ProfileForm,
   SchedulingPolicyForm,
@@ -90,7 +91,7 @@ export default async function ConfiguracoesPage() {
       ? await supabase
           .from("organization_members")
           .select(
-            "reschedule_enabled, reschedule_min_hours, reschedule_within_availability",
+            "reschedule_enabled, reschedule_min_hours, reschedule_within_availability, noshow_policy, noshow_percent, cancel_min_hours",
           )
           .eq("organization_id", profile.organization_id)
           .eq("user_id", profile.id)
@@ -227,6 +228,30 @@ export default async function ConfiguracoesPage() {
             </CardHeader>
             <CardContent>
               <SchedulingPolicyForm policy={myPolicy} />
+            </CardContent>
+          </Card>
+        )}
+
+        {profile.role === "psychologist" && myPolicy && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Faltas e cancelamentos
+              </CardTitle>
+              <CardDescription>
+                O que acontece quando o paciente falta e até quando ele pode
+                cancelar pelo portal. Esta política deve constar no contrato
+                de prestação de serviços.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BillingPolicyForm
+                policy={{
+                  noshow_policy: myPolicy.noshow_policy,
+                  noshow_percent: myPolicy.noshow_percent,
+                  cancel_min_hours: myPolicy.cancel_min_hours,
+                }}
+              />
             </CardContent>
           </Card>
         )}
