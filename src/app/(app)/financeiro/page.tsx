@@ -68,6 +68,12 @@ export default async function FinanceiroPage({
         </div>
         <div className="flex items-center gap-2">
           <Link
+            href="/financeiro/notas"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Notas fiscais
+          </Link>
+          <Link
             href="/financeiro/repasses"
             className={buttonVariants({ variant: "outline" })}
           >

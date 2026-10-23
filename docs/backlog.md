@@ -7,7 +7,7 @@
 | # | Item | Depende de |
 |---|------|-----------|
 | B1 | **Gateway de pagamento** (link Pix/boleto/cartão + webhook) | Escolha do provedor (Asaas, Mercado Pago, Stripe BR…) |
-| B2 | **NFS-e** + Receita Saúde | Escolha do provedor (FocusNFe, eNotas, PlugNotas…). Regras fixas (Andressa): emissão varia por município/enquadramento (tenant separa autônomo vs. clínica); **envio ao paciente NUNCA automático** — sempre confirmação do psicólogo. Colunas `sent_*` já criadas na migration 11 |
+| B2 | **NFS-e** + Receita Saúde | Escolha do provedor — usar **API integradora de prefeituras** (FocusNFe, eNotas, PlugNotas). Regras fixas (Andressa): emissão varia por município/enquadramento — **psicólogo não pode ser MEI** (autônomo com inscrição municipal ou SLU); **envio ao paciente NUNCA automático** — fluxo de revisão já implementado (migration 12): pagamento gera nota `awaiting_review` com prazo de 5 dias → prévia em `/financeiro/notas` → psicólogo marca "revisei e autorizo" → `approved`. Provedor só emite/envia o que estiver `approved` |
 | B3 | **WhatsApp** para lembretes/confirmações | API oficial é paga (Meta/Twilio/Z-API) |
 | B4 | **RESEND_API_KEY** real + domínio verificado | Hoje e-mails caem no fallback (`message_logs`) |
 | B5 | Landing page para "psicólogo em clínica compartilhada" | Decisão de mercado — RLS já suporta (admin vê tudo, profissional só o dele) |
