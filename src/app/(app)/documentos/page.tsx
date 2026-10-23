@@ -49,10 +49,18 @@ export default async function DocumentosPage() {
           </p>
         </div>
         {isPsychologist && (
-          <Link href="/documentos/novo" className={buttonVariants()}>
-            <Plus className="size-4" />
-            Novo documento
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/documentos/modelos"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Modelo de contrato
+            </Link>
+            <Link href="/documentos/novo" className={buttonVariants()}>
+              <Plus className="size-4" />
+              Novo documento
+            </Link>
+          </div>
         )}
       </header>
 

@@ -29,7 +29,7 @@
 
 | # | Item | Notas |
 |---|------|-------|
-| J1 | **Cláusula de política de cancelamento/falta no contrato de prestação de serviços** | A política configurável (migration 11) precisa constar no contrato que o paciente assina — evita contestação da cobrança por falta. Avaliar gerar o contrato como documento `consent_term` no fluxo de cadastro do paciente |
+| J1 | ~~**Cláusula de cancelamento no contrato**~~ ✅ | Feito 23/10: `document_templates` editável por org (`/documentos/modelos`), placeholders `{{campo}}` incl. `{{politica_cancelamento}}` renderizada da config do profissional, novo tipo `contract` no fluxo de documentos. Pendente futuro: aceite do paciente no portal (assinatura/registro de ciência) |
 
 ## Produto — gaps vs. concorrentes (PsicoManager / AnaM)
 

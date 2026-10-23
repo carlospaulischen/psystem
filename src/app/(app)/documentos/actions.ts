@@ -8,9 +8,83 @@ import { logAudit } from "@/lib/audit";
 import {
   DOC_TYPES,
   DOC_TEMPLATE_VERSION,
+  DEFAULT_CONTRACT,
   docTemplate,
+  resolvePlaceholders,
   type DocType,
 } from "@/lib/doc-templates";
+
+// Contrato: busca o modelo editável da org (ou o padrão do sistema) e
+// resolve os placeholders — inclusive {{politica_cancelamento}}, gerado da
+// política que o profissional configurou (falta % + janela de cancelamento).
+async function buildContract(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  profile: { id: string; organization_id: string; full_name: string; crp: string | null },
+  patient: {
+    full_name: string;
+    cpf: string | null;
+    birth_date: string | null;
+    email: string | null;
+  } | null,
+) {
+  const [{ data: tpl }, { data: org }, { data: member }] = await Promise.all([
+    supabase
+      .from("document_templates")
+      .select("body")
+      .eq("organization_id", profile.organization_id)
+      .eq("type", "contract")
+      .eq("is_active", true)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("organizations")
+      .select("name, document, settings")
+      .eq("id", profile.organization_id)
+      .single(),
+    supabase
+      .from("organization_members")
+      .select("noshow_policy, noshow_percent, cancel_min_hours")
+      .eq("organization_id", profile.organization_id)
+      .eq("user_id", profile.id)
+      .eq("status", "active")
+      .maybeSingle(),
+  ]);
+
+  const settings = (org?.settings ?? {}) as Record<string, string | null>;
+  const hours = member?.cancel_min_hours ?? 24;
+  const noshow =
+    (member?.noshow_policy ?? "full") === "none"
+      ? "não será gerada cobrança pela sessão não realizada"
+      : (member?.noshow_policy ?? "full") === "percent"
+        ? `será cobrado o percentual de ${member?.noshow_percent ?? 100}% do valor da sessão`
+        : "será cobrado o valor integral da sessão";
+
+  const politica = `O cancelamento de consultas poderá ser realizado pelo CONTRATANTE através do portal do paciente, até ${hours} (vinte e quatro) horas antes do horário agendado. Em caso de falta sem aviso ou cancelamento fora do prazo estabelecido, ${noshow}, conforme política de atendimento da CONTRATADA.`
+    .replace(
+      `${hours} (vinte e quatro)`,
+      hours === 24 ? "24 (vinte e quatro)" : `${hours}`,
+    );
+
+  return resolvePlaceholders(tpl?.body ?? DEFAULT_CONTRACT, {
+    paciente: patient?.full_name,
+    cpf: patient?.cpf,
+    nascimento: patient?.birth_date
+      ? new Date(patient.birth_date + "T12:00:00").toLocaleDateString("pt-BR")
+      : null,
+    email: patient?.email,
+    profissional: profile.full_name,
+    crp: profile.crp,
+    organizacao: org?.name,
+    documento_org: org?.document,
+    cidade_org: settings?.city,
+    data: new Date().toLocaleDateString("pt-BR"),
+    valor_sessao: settings?.session_price
+      ? `O valor da sessão é de ${settings.session_price}.`
+      : "O valor da sessão é o acordado entre as partes, registrado nas cobranças emitidas pelo sistema.",
+    politica_cancelamento: politica,
+  });
+}
 
 // Cria documento em rascunho com a versão 1 do conteúdo.
 // Se o conteúdo vier vazio, gera o modelo do tipo escolhido — declarações
@@ -54,15 +128,19 @@ export async function createDocument(formData: FormData) {
   if (!content) {
     const { data: patient } = await supabase
       .from("patients")
-      .select("full_name")
+      .select("full_name, cpf, birth_date, email")
       .eq("id", patientId)
       .single();
-    content = docTemplate(type, {
-      patientName: patient?.full_name ?? "[paciente]",
-      psychologistName: profile.full_name,
-      crp: profile.crp,
-      appointmentLabel,
-    });
+    if (type === "contract") {
+      content = await buildContract(supabase, profile, patient);
+    } else {
+      content = docTemplate(type, {
+        patientName: patient?.full_name ?? "[paciente]",
+        psychologistName: profile.full_name,
+        crp: profile.crp,
+        appointmentLabel,
+      });
+    }
   }
   if (!content) redirect("/documentos/novo?error=required");
 
@@ -256,6 +334,53 @@ export async function invalidateDocument(docId: string) {
   });
 
   revalidatePath(`/documentos/${docId}`);
+}
+
+// Modelo editável da org — um ativo por tipo (o mais recente vale).
+// Somente admin: é quem responde juridicamente pelo texto do contrato.
+export async function saveContractTemplate(formData: FormData) {
+  const { profile } = await requireStaff();
+  if (!profile.is_org_admin) redirect("/documentos/modelos?error=admin");
+
+  const supabase = await createClient();
+  const body = (formData.get("body") as string)?.trim();
+  const name = (formData.get("name") as string)?.trim() || "Contrato padrão";
+  if (!body) redirect("/documentos/modelos?error=required");
+
+  const { data: existing } = await supabase
+    .from("document_templates")
+    .select("id")
+    .eq("organization_id", profile.organization_id)
+    .eq("type", "contract")
+    .eq("is_active", true)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { error } = existing
+    ? await supabase
+        .from("document_templates")
+        .update({ body, name, updated_at: new Date().toISOString() })
+        .eq("id", existing.id)
+    : await supabase.from("document_templates").insert({
+        organization_id: profile.organization_id,
+        type: "contract",
+        name,
+        body,
+        created_by: profile.id,
+      });
+
+  if (error) redirect("/documentos/modelos?error=save");
+
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "document_template",
+    resourceId: existing?.id ?? undefined,
+    action: "MODELO_CONTRATO_SALVO",
+  });
+
+  revalidatePath("/documentos/modelos");
+  redirect("/documentos/modelos?saved=1");
 }
 
 export async function setDocumentReview(docId: string, review: boolean) {

@@ -14,6 +14,7 @@ export const DOC_TYPES = [
   "laudo",
   "opinion",
   "consent_term",
+  "contract",
   "other",
 ] as const;
 
@@ -29,6 +30,7 @@ export const DOC_TYPE_LABEL: Record<DocType, string> = {
   laudo: "Laudo psicológico",
   opinion: "Parecer psicológico",
   consent_term: "Termo de autorização",
+  contract: "Contrato de prestação de serviços",
   other: "Outro",
 };
 
@@ -74,6 +76,10 @@ export const DOC_RULES: Record<DocType, string[]> = {
   consent_term: [
     "Descreva exatamente o que será compartilhado, com quem e para quê.",
     "Registre a forma de coleta do consentimento e seu prazo.",
+  ],
+  contract: [
+    "Gerado a partir do modelo da organização — revise as cláusulas antes de emitir.",
+    "A política de faltas/cancelamento do contrato deve bater com a configurada nas suas configurações.",
   ],
   other: ["Aplique as regras gerais: finalidade, dados mínimos e revisão antes de emitir."],
 };
@@ -206,4 +212,77 @@ export function docTemplate(type: string, ctx: TemplateContext): string {
     default:
       return "";
   }
+}
+
+// ---------------------------------------------------------------------------
+// Contrato de prestação de serviços — modelo padrão quando a org ainda não
+// editou o seu. Placeholders {{campo}} resolvidos em resolveContractVars().
+// ---------------------------------------------------------------------------
+
+export const DEFAULT_CONTRACT = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS PSICOLÓGICOS
+
+CONTRATADA: {{organizacao}}, inscrita no CNPJ/CPF sob o nº {{documento_org}}, com sede em {{cidade_org}}, neste ato representada pelo(a) profissional {{profissional}}, inscrito(a) no {{crp}}.
+
+CONTRATANTE: {{paciente}}, inscrito(a) no CPF sob o nº {{cpf}}.
+
+Cláusula 1ª — DO OBJETO
+O presente contrato tem por objeto a prestação de serviços de atendimento psicológico, na forma de sessões de psicoterapia, na modalidade presencial e/ou online, conforme agendamento realizado entre as partes.
+
+Cláusula 2ª — DOS HONORÁRIOS E DA FORMA DE PAGAMENTO
+{{valor_sessao}}
+O pagamento das consultas será realizado na forma e prazos indicados nas cobranças emitidas pelo sistema da CONTRATADA.
+
+Cláusula 3ª — DE FALTAS E CANCELAMENTOS
+{{politica_cancelamento}}
+
+Cláusula 4ª — DO SIGILO PROFISSIONAL
+Todas as informações obtidas no processo psicoterapêutico são protegidas por sigilo profissional, nos termos do Código de Ética Profissional do Psicólogo (Resolução CFP nº 010/2005) e da legislação aplicável, só podendo ser utilizadas para as finalidades previstas em norma.
+
+Cláusula 5ª — DA PROTEÇÃO DE DADOS PESSOAIS
+Os dados pessoais do CONTRATANTE serão tratados exclusivamente para as finalidades deste contrato, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018), podendo o CONTRATANTE revogar consentimentos e exercer seus direitos junto à CONTRATADA.
+
+Cláusula 6ª — DO PRAZO E DA RESCISÃO
+O presente contrato vigora por prazo indeterminado e pode ser rescindido por qualquer das partes mediante comunicação prévia, sem prejuízo das obrigações já assumidas (consultas realizadas e cobranças devidas).
+
+E, por estarem de acordo, as partes firmam o presente instrumento.
+
+{{cidade_org}}, {{data}}
+
+_______________________________
+{{profissional}} — {{crp}}
+CONTRATADA
+
+_______________________________
+{{paciente}}
+CONTRATANTE`;
+
+// Campos dinâmicos aceitos nos modelos editáveis.
+export const CONTRACT_PLACEHOLDERS = [
+  ["{{paciente}}", "Nome do paciente"],
+  ["{{cpf}}", "CPF do paciente"],
+  ["{{nascimento}}", "Data de nascimento"],
+  ["{{email}}", "E-mail do paciente"],
+  ["{{profissional}}", "Nome do profissional"],
+  ["{{crp}}", "Registro profissional"],
+  ["{{organizacao}}", "Nome da clínica/consultório"],
+  ["{{documento_org}}", "CNPJ/CPF da organização"],
+  ["{{cidade_org}}", "Cidade da organização"],
+  ["{{data}}", "Data de emissão"],
+  ["{{valor_sessao}}", "Valor da sessão"],
+  [
+    "{{politica_cancelamento}}",
+    "Cláusula gerada da política de faltas/cancelamento configurada",
+  ],
+] as const;
+
+// Substitui {{campo}} pelo valor correspondente; placeholder sem valor vira
+// lacuna visual (___), nunca texto cru do template.
+export function resolvePlaceholders(
+  body: string,
+  vars: Record<string, string | null | undefined>,
+): string {
+  return body.replace(/\{\{(\w+)\}\}/g, (match, key: string) => {
+    const value = vars[key];
+    return value != null && value !== "" ? value : "_______________";
+  });
 }
