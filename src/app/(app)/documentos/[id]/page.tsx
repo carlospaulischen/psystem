@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
 import { StatusBadge } from "@/components/status-badge";
 import { DOC_TYPE_LABEL } from "../page";
 import {
@@ -51,6 +52,15 @@ export default async function DocumentoPage({
 
   // RLS: fora do psicólogo responsável a linha nem existe → 404.
   if (!doc) notFound();
+
+  // Trilha LGPD: leitura de documento clínico também é auditada.
+  await logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "document",
+    resourceId: doc.id,
+    action: "DOCUMENTO_LIDO",
+    patientId: doc.patient_id,
+  });
 
   const versions = (doc.versions as Version[]).sort(
     (a, b) => b.version - a.version,

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
@@ -55,6 +56,8 @@ export default async function PortalPage({
     { data: requests },
     { data: apptRequests },
     { data: anamneses },
+    { data: contracts },
+    { data: acceptances },
   ] = await Promise.all([
       supabase
         .from("appointments")
@@ -85,6 +88,16 @@ export default async function PortalPage({
         .eq("status", "sent")
         .order("sent_at", { ascending: false })
         .limit(1),
+      supabase
+        .from("documents")
+        .select("id, title, issued_at")
+        .eq("type", "contract")
+        .eq("status", "delivered")
+        .order("issued_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("document_acceptances")
+        .select("document_id, accepted_at"),
     ]);
 
   return (
@@ -339,6 +352,39 @@ export default async function PortalPage({
         </Card>
       )}
 
+      {contracts && contracts.length > 0 && (
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-base">Contrato</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {contracts.map((c) => {
+              const acc = acceptances?.find(
+                (a) => a.document_id === c.id,
+              );
+              return (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between rounded-md border p-3"
+                >
+                  <span className="text-sm font-medium">{c.title}</span>
+                  {acc ? (
+                    <StatusBadge status="accepted" />
+                  ) : (
+                    <Link
+                      href={`/portal/contrato/${c.id}`}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      Ler e aceitar →
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="mt-4">
         <CardHeader>
           <CardTitle className="text-base">Solicitar documento</CardTitle>
@@ -401,6 +447,46 @@ export default async function PortalPage({
               ))}
             </ul>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-base">Privacidade e dados</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Baixe uma cópia dos seus dados cadastrais.
+            </p>
+            <a
+              href="/api/meus-dados"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Exportar meus dados
+            </a>
+          </div>
+          <form action={createAccessRequest} className="grid gap-2">
+            <input
+              type="hidden"
+              name="request_type"
+              value="data_correction"
+            />
+            <Label htmlFor="corr_note" className="text-sm">
+              Solicitar correção de dados
+            </Label>
+            <Textarea
+              id="corr_note"
+              name="note"
+              rows={2}
+              placeholder="O que precisa ser corrigido? (ex.: telefone, endereço)"
+            />
+            <div className="flex justify-end">
+              <SubmitButton size="sm" variant="outline">
+                Enviar pedido
+              </SubmitButton>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </main>

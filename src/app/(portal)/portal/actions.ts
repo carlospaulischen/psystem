@@ -3,8 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
-const REQUEST_TYPES = ["declaration", "certificate", "report", "document"];
+const REQUEST_TYPES = [
+  "declaration",
+  "certificate",
+  "report",
+  "document",
+  "data_correction",
+];
 
 // Solicitação do paciente (ET-016): o portal registra o pedido; quem decide
 // é o psicólogo responsável — o paciente nunca acessa conteúdo direto.
@@ -179,4 +186,40 @@ export async function submitAnamnesis(responseId: string, formData: FormData) {
   }
 
   revalidatePath("/portal");
+}
+
+// Aceite de contrato — prova legal: paciente + timestamp + IP + user-agent.
+// Append-only: unique(document_id) impede duplo aceite.
+export async function acceptContract(documentId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/portal");
+
+  const { data: account } = await supabase
+    .from("patient_accounts")
+    .select("patient_id")
+    .eq("user_id", user.id)
+    .single();
+  if (!account) return;
+
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  const ua = h.get("user-agent") ?? null;
+
+  const { error } = await supabase.from("document_acceptances").insert({
+    document_id: documentId,
+    patient_id: account.patient_id,
+    user_id: user.id,
+    ip,
+    user_agent: ua,
+  });
+
+  if (error && !error.message.includes("duplicate")) {
+    console.error("[portal] accept:", error.message);
+  }
+
+  revalidatePath("/portal");
+  revalidatePath(`/portal/contrato/${documentId}`);
 }

@@ -18,6 +18,7 @@ import { ClinicalRecordPanel } from "./clinical-record-panel";
 import { PatientActions } from "./patient-actions";
 import { invitePatientPortal, uploadAttachment, deleteAttachment, sendAnamnesis } from "../actions";
 import { Paperclip, Trash2, Upload } from "lucide-react";
+import { logAudit } from "@/lib/audit";
 import type { Appointment, Charge } from "@/types";
 
 function formatBRL(cents: number) {
@@ -43,6 +44,8 @@ export default async function PacienteDetailPage({
     )
     .eq("id", id)
     .single();
+
+  if (!patient) notFound();
 
   if (!patient) notFound();
 
@@ -93,6 +96,17 @@ export default async function PacienteDetailPage({
         .order("sent_at", { ascending: false })
         .limit(10),
     ]);
+
+  // Trilha LGPD: abrir a ficha com prontuário também é acesso auditado.
+  if (record && profile.role === "psychologist") {
+    void logAudit({
+      organizationId: profile.organization_id,
+      resourceType: "clinical_record",
+      resourceId: record.id,
+      action: "PRONTUARIO_LIDO",
+      patientId: patient.id,
+    });
+  }
 
   const responsible = patient.links?.find(
     (l: { status: string }) => l.status === "active",
