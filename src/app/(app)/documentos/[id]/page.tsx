@@ -45,7 +45,7 @@ export default async function DocumentoPage({
   const { data: doc } = await supabase
     .from("documents")
     .select(
-      "*, patient:patients(full_name), appointment:appointments(starts_at, modality), versions:document_versions(version, content, issued_at, created_at), deliveries:document_deliveries(delivered_to, channel, delivered_at)",
+      "*, patient:patients(full_name), appointment:appointments(starts_at, modality), versions:document_versions(version, content, issued_at, created_at), deliveries:document_deliveries(delivered_to, channel, delivered_at), acceptances:document_acceptances(accepted_at, ip)",
     )
     .eq("id", id)
     .single();
@@ -279,6 +279,38 @@ export default async function DocumentoPage({
                   Invalidar documento
                 </SubmitButton>
               </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {doc.acceptances && doc.acceptances.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Aceite do paciente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="divide-y divide-border text-sm">
+                {doc.acceptances.map(
+                  (a: { accepted_at: string; ip: string | null }) => (
+                    <li
+                      key={a.accepted_at}
+                      className="flex items-center justify-between py-2.5"
+                    >
+                      <span>
+                        Contrato aceito pelo paciente
+                        {a.ip && (
+                          <span className="ml-2 text-muted-foreground">
+                            IP {a.ip}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(a.accepted_at).toLocaleString("pt-BR")}
+                      </span>
+                    </li>
+                  ),
+                )}
+              </ul>
             </CardContent>
           </Card>
         )}
