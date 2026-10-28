@@ -7,6 +7,7 @@ import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/audit";
+import { sendAuthEmail } from "@/lib/messages";
 
 export async function createPatient(formData: FormData) {
   const { profile } = await requireStaff();
@@ -353,23 +354,50 @@ export async function invitePatientPortal(patientId: string) {
     "http://localhost:3000";
   const admin = createAdminClient();
 
-  const { data: invite, error } = await admin.auth.admin.inviteUserByEmail(
-    patient.email,
-    {
+  // Convite sai pelo Resend (não pelo SMTP do Auth, que é compartilhado
+  // com outro app no projeto). generateLink cria o usuário sem enviar e-mail.
+  const { data: invite, error } = await admin.auth.admin.generateLink({
+    type: "invite",
+    email: patient.email,
+    options: {
       data: { full_name: patient.full_name, app: "psystem" },
       redirectTo: `${origin}/auth/callback?next=/portal`,
     },
-  );
+  });
 
   let userId = invite?.user?.id;
-  // Se o e-mail já existe no Auth, vincula o usuário existente.
+  let actionLink = invite?.properties?.action_link;
+
+  // Se o e-mail já existe no Auth, vincula o usuário existente e manda
+  // um link de redefinição (ele recupera acesso definindo nova senha).
   if (error?.message?.includes("already been registered")) {
     const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
-    userId = list?.users.find((u) => u.email === patient.email)?.id;
+    const existingUser = list?.users.find((u) => u.email === patient.email);
+    userId = existingUser?.id;
+    const { data: recovery } = await admin.auth.admin.generateLink({
+      type: "recovery",
+      email: patient.email,
+      options: { redirectTo: `${origin}/auth/callback?next=/nova-senha` },
+    });
+    actionLink = recovery?.properties?.action_link;
   }
   if (!userId) {
     console.error("[portal] invite:", error?.message);
     return;
+  }
+
+  if (actionLink) {
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("name")
+      .eq("id", profile.organization_id)
+      .single();
+    await sendAuthEmail("patient_invite", {
+      to: patient.email,
+      name: patient.full_name,
+      orgName: org?.name,
+      actionLink,
+    });
   }
 
   await admin.from("patient_accounts").insert({

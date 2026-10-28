@@ -17,7 +17,7 @@ export async function sendEmail(params: {
 }): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from =
-    process.env.EMAIL_FROM ?? "PSYSTEM <notificacoes@psystem.com.br>";
+    process.env.EMAIL_FROM ?? "PSYSTEM <notificacoes@psystem.app.br>";
 
   if (!apiKey) {
     console.log(`[email:dev] para=${params.to} assunto="${params.subject}"`);

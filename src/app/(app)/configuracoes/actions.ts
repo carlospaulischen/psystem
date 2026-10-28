@@ -6,6 +6,7 @@ import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/audit";
+import { sendAuthEmail } from "@/lib/messages";
 
 const INVITABLE_ROLES = ["psychologist", "receptionist", "clinic_admin"];
 
@@ -98,17 +99,27 @@ export async function inviteStaff(
     return { ok: true };
   }
 
-  const { data: invite, error } = await admin.auth.admin.inviteUserByEmail(
+  // Convite sai pelo Resend (o SMTP do Auth é do projeto inteiro e
+  // compartilhado com outro app). generateLink cria o usuário sem
+  // disparar e-mail; nós enviamos o link.
+  const { data: invite, error } = await admin.auth.admin.generateLink({
+    type: "invite",
     email,
-    {
+    options: {
       data: { full_name: fullName, app: "psystem" },
       redirectTo: `${origin}/auth/callback?next=/nova-senha`,
     },
-  );
+  });
 
   if (error || !invite.user) {
     console.error("[staff] invite:", error?.message);
     return { error: "Não foi possível enviar o convite." };
+  }
+
+  const actionLink = invite.properties?.action_link;
+  if (!actionLink) {
+    console.error("[staff] invite: link não gerado");
+    return { error: "Não foi possível gerar o link de convite." };
   }
 
   const { error: profileError } = await admin.from("profiles").insert({
@@ -132,6 +143,18 @@ export async function inviteStaff(
     role: role as "psychologist" | "receptionist" | "clinic_admin",
     status: "invited",
     invited_by: profile.id,
+  });
+
+  const { data: org } = await admin
+    .from("organizations")
+    .select("name")
+    .eq("id", profile.organization_id)
+    .single();
+  await sendAuthEmail("staff_invite", {
+    to: email,
+    name: fullName,
+    orgName: org?.name,
+    actionLink,
   });
 
   await logAudit({

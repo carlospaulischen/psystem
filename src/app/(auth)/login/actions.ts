@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { sendAuthEmail } from "@/lib/messages";
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
@@ -35,15 +37,49 @@ export async function logout() {
 }
 
 // Recuperação de senha — sempre responde o mesmo para não vazar
-// se o e-mail existe ou não na base.
+// se o e-mail existe ou não na base. O e-mail sai pelo Resend: o SMTP
+// do Auth é do projeto inteiro, compartilhado com outro app.
 export async function requestPasswordReset(formData: FormData) {
-  const email = formData.get("email") as string;
-  const origin = (await headers()).get("origin") ?? "http://localhost:3000";
+  const email = (formData.get("email") as string)?.trim().toLowerCase();
+  const origin =
+    (await headers()).get("origin") ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    "http://localhost:3000";
 
-  const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/nova-senha`,
-  });
+  if (email) {
+    const admin = createAdminClient();
+    const { data: link } = await admin.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: { redirectTo: `${origin}/auth/callback?next=/nova-senha` },
+    });
+
+    const actionLink = link?.properties?.action_link;
+    // Só envia para usuários do psystem — a base Auth é compartilhada e
+    // um e-mail de outro app receberia nosso branding por engano.
+    const isPsystemUser =
+      link?.user?.user_metadata?.app === "psystem" ||
+      (link?.user?.id &&
+        (await admin
+          .from("profiles")
+          .select("id")
+          .eq("id", link.user.id)
+          .maybeSingle()).data) ||
+      (link?.user?.id &&
+        (await admin
+          .from("patient_accounts")
+          .select("patient_id")
+          .eq("user_id", link.user.id)
+          .maybeSingle()).data);
+
+    if (actionLink && isPsystemUser) {
+      await sendAuthEmail("password_reset", {
+        to: email,
+        name: link.user?.user_metadata?.full_name as string | undefined,
+        actionLink,
+      });
+    }
+  }
 
   redirect("/login?sent=1");
 }
