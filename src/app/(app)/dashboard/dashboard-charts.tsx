@@ -36,9 +36,10 @@ export function RevenueChart({
         <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
         <XAxis
           dataKey="month"
+          interval={0}
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
         />
         <YAxis
           tickLine={false}
@@ -79,9 +80,10 @@ export function WeekChart({
         <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
         <XAxis
           dataKey="day"
+          interval={0}
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
         />
         <YAxis
           allowDecimals={false}
