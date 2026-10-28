@@ -10,8 +10,7 @@ import {
   submitAnamnesis,
 } from "./actions";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { LogOut } from "lucide-react";
-import { logout } from "@/app/(auth)/login/actions";
+import { PortalUserMenu } from "./user-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,6 +38,16 @@ export default async function PortalPage({
   const params = await searchParams;
 
   const { data: cancelHours } = await supabase.rpc("my_cancel_min_hours");
+
+  // Quem está logado — evita confusão de sessão (staff vs paciente).
+  const { data: account } = await supabase
+    .from("patient_accounts")
+    .select("patient:patients(full_name)")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const patientName = (
+    account?.patient as { full_name?: string } | null
+  )?.full_name;
 
   const [
     { data: appointments },
@@ -93,12 +102,7 @@ export default async function PortalPage({
             Meu portal
           </h1>
         </div>
-        <form action={logout}>
-          <SubmitButton variant="ghost" size="sm">
-            <LogOut className="size-4" />
-            Sair
-          </SubmitButton>
-        </form>
+        <PortalUserMenu name={patientName} />
       </div>
 
       {(params.notice === "cancel_window" ||
