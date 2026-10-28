@@ -27,7 +27,7 @@ export default async function LoginPage({
             alt="PSYSTEM — Tecnologia para saúde mental"
             width={200}
             height={160}
-            className="mb-1 h-auto w-44"
+            className="mx-auto mb-1 h-auto w-44"
             priority
           />
           <CardDescription>

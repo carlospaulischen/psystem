@@ -21,7 +21,7 @@ export default function RecuperarPage() {
             alt="PSYSTEM"
             width={140}
             height={140}
-            className="mb-1 h-auto w-28"
+            className="mx-auto mb-1 h-auto w-28"
             priority
           />
           <CardDescription>

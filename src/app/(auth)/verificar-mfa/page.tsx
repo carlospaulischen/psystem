@@ -23,7 +23,7 @@ export default async function VerificarMfaPage({
             alt="PSYSTEM — Tecnologia para saúde mental"
             width={200}
             height={160}
-            className="mb-1 h-auto w-44"
+            className="mx-auto mb-1 h-auto w-44"
             priority
           />
           <CardDescription>Verificação em duas etapas</CardDescription>
