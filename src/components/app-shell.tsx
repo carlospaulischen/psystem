@@ -26,7 +26,7 @@ export function AppShell({
   }, [pathname]);
 
   return (
-    <div className="flex h-dvh flex-1 overflow-hidden">
+    <div className="flex min-h-dvh flex-1">
       {open && (
         <div
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
@@ -37,14 +37,14 @@ export function AppShell({
 
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <AppSidebar profile={profile} orgs={orgs} />
       </div>
 
-      <main className="min-w-0 flex-1 overflow-y-auto bg-muted/40">
+      <main className="min-w-0 flex-1 bg-muted/40">
         <VersionChecker />
         <AppTopbar onMenu={() => setOpen(true)} />
         <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">{children}</div>
