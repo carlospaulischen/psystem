@@ -37,7 +37,7 @@ export function AppShell({
 
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:sticky lg:top-0 lg:bottom-auto lg:z-auto lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:sticky lg:top-0 lg:bottom-auto lg:z-auto lg:self-start lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
