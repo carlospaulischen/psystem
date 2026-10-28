@@ -151,7 +151,7 @@ export async function importPatientsCsv(
     supabase
       .from("profiles")
       .select("id, full_name")
-      .eq("role", "psychologist")
+      .in("role", ["psychologist", "clinic_admin"])
       .eq("status", "active"),
   ]);
   const seenEmails = new Set(

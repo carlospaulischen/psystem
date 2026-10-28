@@ -76,7 +76,7 @@ export default async function RepassesPage({
           "user_id, role, commission_pct, profile:profiles!user_id(full_name)",
         )
         .eq("organization_id", profile.organization_id)
-        .eq("role", "psychologist")
+        .in("role", ["psychologist", "clinic_admin"])
         .returns<MemberRow[]>(),
     ]);
 

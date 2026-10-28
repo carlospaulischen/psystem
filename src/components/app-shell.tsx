@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "./app-sidebar";
 import { AppTopbar } from "./app-topbar";
+import { VersionChecker } from "./version-checker";
 import { cn } from "@/lib/utils";
 
 // Shell da área interna: sidebar fixa em desktop, drawer off-canvas
@@ -44,6 +45,7 @@ export function AppShell({
       </div>
 
       <main className="min-w-0 flex-1 overflow-y-auto bg-muted/40">
+        <VersionChecker />
         <AppTopbar onMenu={() => setOpen(true)} />
         <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">{children}</div>
       </main>

@@ -37,7 +37,7 @@ export default async function NovoAgendamentoPage({
       supabase
         .from("profiles")
         .select("id, full_name")
-        .eq("role", "psychologist")
+        .in("role", ["psychologist", "clinic_admin"])
         .eq("status", "active")
         .order("full_name")
         .returns<Pick<Profile, "id" | "full_name">[]>(),

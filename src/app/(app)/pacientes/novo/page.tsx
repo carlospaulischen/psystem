@@ -26,7 +26,7 @@ export default async function NovoPacientePage({
   const { data: psychologists } = await supabase
     .from("profiles")
     .select("id, full_name, crp")
-    .eq("role", "psychologist")
+    .in("role", ["psychologist", "clinic_admin"])
     .eq("status", "active")
     .order("full_name")
     .returns<Pick<Profile, "id" | "full_name" | "crp">[]>();
