@@ -186,11 +186,11 @@ export default async function NovoAgendamentoPage({
                 <Input
                   id="meeting_link"
                   name="meeting_link"
-                  type="url"
-                  placeholder="https://meet.google.com/…"
+                  placeholder="https://meet.google.com/… ou WhatsApp"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Somente para consultas online — aparece no portal do paciente.
+                  Somente para consultas online — aparece no portal do
+                  paciente. Aceita link ou texto livre (ex.: WhatsApp).
                 </p>
               </div>
               <div className="grid gap-2">
