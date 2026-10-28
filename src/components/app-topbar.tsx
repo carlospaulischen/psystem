@@ -45,7 +45,7 @@ export function AppTopbar({ onMenu }: { onMenu?: () => void }) {
       </p>
 
       <form
-        className="ml-auto"
+        className="ml-auto hidden sm:block"
         action={(formData) => {
           const q = String(formData.get("q") ?? "").trim();
           router.push(q ? `/pacientes?q=${encodeURIComponent(q)}` : "/pacientes");

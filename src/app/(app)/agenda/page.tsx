@@ -6,6 +6,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { AppointmentStatusMenu } from "./status-menu";
 import { approveAppointmentRequest, rejectAppointmentRequest } from "./actions";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { PendingLink } from "@/components/pending-link";
+import { ApptCard } from "./appt-card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "@/types";
@@ -164,7 +166,7 @@ export default async function AgendaPage({
           <h1 className="text-2xl font-semibold tracking-tight">Agenda</h1>
           <p className="mt-1 text-sm capitalize text-muted-foreground">{title}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           <div className="flex rounded-lg border border-border p-0.5">
             {(
               [
@@ -173,7 +175,7 @@ export default async function AgendaPage({
                 ["month", "Mês", CalendarDays, `/agenda?view=month&month=${monthParam}`],
               ] as const
             ).map(([v, label, Icon, href]) => (
-              <Link
+              <PendingLink
                 key={v}
                 href={href}
                 className={cn(
@@ -185,10 +187,13 @@ export default async function AgendaPage({
               >
                 <Icon className="size-3.5" />
                 {label}
-              </Link>
+              </PendingLink>
             ))}
           </div>
-          <Link href="/agenda/novo" className={buttonVariants()}>
+          <Link
+            href="/agenda/novo"
+            className={cn(buttonVariants(), "w-full sm:w-auto")}
+          >
             <Plus className="size-4" />
             Novo agendamento
           </Link>
@@ -255,24 +260,24 @@ export default async function AgendaPage({
       {view === "month" ? (
         <div className="mt-6">
           <div className="mb-3 flex items-center gap-2">
-            <Link
+            <PendingLink
               href={monthLink(prevMonth)}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               ← {prevMonth.toLocaleDateString("pt-BR", { month: "short" })}
-            </Link>
-            <Link
+            </PendingLink>
+            <PendingLink
               href={`/agenda?view=month&month=${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Hoje
-            </Link>
-            <Link
+            </PendingLink>
+            <PendingLink
               href={monthLink(nextMonth)}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               {nextMonth.toLocaleDateString("pt-BR", { month: "short" })} →
-            </Link>
+            </PendingLink>
           </div>
           <div className="grid grid-cols-7 overflow-hidden rounded-xl border bg-card">
             {WEEKDAY_HEADER.map((w) => (
@@ -310,8 +315,10 @@ export default async function AgendaPage({
                   </p>
                   <ul className="mt-1 space-y-1">
                     {items.slice(0, 3).map((a) => (
-                      <li
+                      <ApptCard
                         key={a.id}
+                        id={a.id}
+                        startsAt={a.starts_at}
                         className={cn(
                           "truncate rounded border-l-2 bg-background px-1 py-0.5 text-[10px]",
                           STATUS_DOT[a.status] ?? "border-l-border",
@@ -319,7 +326,7 @@ export default async function AgendaPage({
                       >
                         {timeLabel(a.starts_at)}{" "}
                         {a.patient?.full_name?.split(" ")[0] ?? "Bloqueio"}
-                      </li>
+                      </ApptCard>
                     ))}
                     {items.length > 3 && (
                       <li className="text-[10px] text-muted-foreground">
@@ -355,8 +362,10 @@ export default async function AgendaPage({
                 </h2>
                 <ul className="space-y-1.5">
                   {items.map((a) => (
-                    <li
+                    <ApptCard
                       key={a.id}
+                      id={a.id}
+                      startsAt={a.starts_at}
                       className={cn(
                         "rounded-md border border-l-4 bg-background px-2 py-1.5",
                         STATUS_DOT[a.status] ?? "border-l-border",
@@ -372,7 +381,7 @@ export default async function AgendaPage({
                         {a.psychologist?.full_name?.split(" ")[0]}
                         {a.modality === "online" ? " · Online" : ""}
                       </p>
-                    </li>
+                    </ApptCard>
                   ))}
                   {items.length === 0 && (
                     <li className="pt-3 text-center text-[11px] text-muted-foreground/60">
