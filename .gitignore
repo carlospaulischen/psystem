@@ -47,3 +47,4 @@ supabase/.env
 next-env.d.ts
 
 .vercel
+backups/
