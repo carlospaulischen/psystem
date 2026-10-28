@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   "/login",
   "/recuperar",
   "/auth/callback",
+  "/auth/verify",
   "/auth/confirm",
   "/clinicas",
 ];
