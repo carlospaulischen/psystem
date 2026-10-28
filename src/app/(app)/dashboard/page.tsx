@@ -89,6 +89,10 @@ export default async function DashboardPage() {
       .from("appointments")
       .select("status")
       .gte("starts_at", monthStart.toISOString())
+      .lt(
+        "starts_at",
+        new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString(),
+      )
       .returns<Pick<Appointment, "status">[]>(),
   ]);
 
