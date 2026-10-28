@@ -10,6 +10,8 @@ import {
   submitAnamnesis,
 } from "./actions";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { LogOut } from "lucide-react";
+import { logout } from "@/app/(auth)/login/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -78,15 +80,25 @@ export default async function PortalPage({
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 p-6">
-      <div className="flex items-center gap-3">
-        <Image
-          src="/brand/psystem/logo-horizontal.png"
-          alt="PSYSTEM"
-          width={463}
-          height={145}
-          className="h-10 w-auto"
-        />
-        <h1 className="text-2xl font-semibold tracking-tight">Meu portal</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/brand/psystem/logo-horizontal.png"
+            alt="PSYSTEM"
+            width={463}
+            height={145}
+            className="h-10 w-auto"
+          />
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Meu portal
+          </h1>
+        </div>
+        <form action={logout}>
+          <SubmitButton variant="ghost" size="sm">
+            <LogOut className="size-4" />
+            Sair
+          </SubmitButton>
+        </form>
       </div>
 
       {(params.notice === "cancel_window" ||
