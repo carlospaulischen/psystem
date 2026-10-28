@@ -196,7 +196,7 @@ export default async function DashboardPage() {
     {
       label: "Hoje",
       value: String(appointments?.length ?? 0),
-      hint: "atendimento(s) agendado(s)",
+      hint: `agendado(s) hoje · ${weekAppointments?.length ?? 0} esta semana`,
       icon: CalendarDays,
     },
     {
