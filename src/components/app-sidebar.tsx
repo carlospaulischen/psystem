@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Building2,
   CalendarDays,
@@ -25,7 +25,6 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { OrgSwitcher } from "@/components/org-switcher";
-import { logout } from "@/app/(auth)/login/actions";
 
 const NAV_GROUPS: {
   label: string;
@@ -102,6 +101,7 @@ export function AppSidebar({
   orgs?: { id: string; name: string; type: string }[];
 }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <aside className="flex h-dvh w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
@@ -174,7 +174,7 @@ export function AppSidebar({
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-52">
-            <DropdownMenuItem onSelect={() => logout()}>
+            <DropdownMenuItem onSelect={() => router.push("/sair")}>
               <LogOut className="size-4" />
               Sair
             </DropdownMenuItem>

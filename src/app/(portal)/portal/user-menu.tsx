@@ -8,10 +8,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut } from "lucide-react";
-import { logout } from "@/app/(auth)/login/actions";
+import { useRouter } from "next/navigation";
 
 // Menu de avatar no topo do portal — mostra quem está logado e dá saída.
 export function PortalUserMenu({ name }: { name?: string }) {
+  const router = useRouter();
   const display = name || "Minha conta";
   const ini = display
     .split(" ")
@@ -32,7 +33,7 @@ export function PortalUserMenu({ name }: { name?: string }) {
         </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuItem onSelect={() => logout()}>
+        <DropdownMenuItem onSelect={() => router.push("/sair")}>
           <LogOut className="size-4" />
           Sair
         </DropdownMenuItem>
