@@ -116,7 +116,10 @@ export async function inviteStaff(
     return { error: "Não foi possível enviar o convite." };
   }
 
-  const actionLink = invite.properties?.action_link;
+  // Link com nosso domínio: /auth/verify usa o token_hash + verifyOtp.
+  const actionLink = invite.properties?.hashed_token
+    ? `${origin}/auth/verify?token_hash=${invite.properties.hashed_token}&type=invite&next=/nova-senha`
+    : invite.properties?.action_link;
   if (!actionLink) {
     console.error("[staff] invite: link não gerado");
     return { error: "Não foi possível gerar o link de convite." };

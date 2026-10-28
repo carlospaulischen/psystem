@@ -366,7 +366,18 @@ export async function invitePatientPortal(patientId: string) {
   });
 
   let userId = invite?.user?.id;
-  let actionLink = invite?.properties?.action_link;
+  // Link com nosso domínio: /auth/verify usa o token_hash + verifyOtp
+  // (sem supabase.co visível). Fallback: action_link do Supabase.
+  const buildLink = (
+    props: { hashed_token?: string; action_link?: string } | null | undefined,
+    type: string,
+    next: string,
+  ) =>
+    props?.hashed_token
+      ? `${origin}/auth/verify?token_hash=${props.hashed_token}&type=${type}&next=${next}`
+      : props?.action_link;
+
+  let actionLink = buildLink(invite?.properties, "invite", "/portal");
 
   // Se o e-mail já existe no Auth, vincula o usuário existente e manda
   // um link de redefinição (ele recupera acesso definindo nova senha).
@@ -379,7 +390,7 @@ export async function invitePatientPortal(patientId: string) {
       email: patient.email,
       options: { redirectTo: `${origin}/auth/callback?next=/nova-senha` },
     });
-    actionLink = recovery?.properties?.action_link;
+    actionLink = buildLink(recovery?.properties, "recovery", "/nova-senha");
   }
   if (!userId) {
     console.error("[portal] invite:", error?.message);

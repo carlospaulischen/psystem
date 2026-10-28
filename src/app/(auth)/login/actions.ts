@@ -54,7 +54,10 @@ export async function requestPasswordReset(formData: FormData) {
       options: { redirectTo: `${origin}/auth/callback?next=/nova-senha` },
     });
 
-    const actionLink = link?.properties?.action_link;
+    // Link com nosso domínio: /auth/verify usa o token_hash + verifyOtp.
+    const actionLink = link?.properties?.hashed_token
+      ? `${origin}/auth/verify?token_hash=${link.properties.hashed_token}&type=recovery&next=/nova-senha`
+      : link?.properties?.action_link;
     // Só envia para usuários do psystem — a base Auth é compartilhada e
     // um e-mail de outro app receberia nosso branding por engano.
     const isPsystemUser =
