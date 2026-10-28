@@ -36,6 +36,7 @@ export default async function EditarPacientePage({
 
   const guardian = (patient.guardian ?? {}) as {
     full_name?: string;
+    cpf?: string;
     phone?: string;
     kinship?: string;
   };
@@ -113,11 +114,16 @@ export default async function EditarPacientePage({
 
             <div className="grid gap-2">
               <Label>Responsável legal (menores de idade)</Label>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-4">
                 <Input
                   name="guardian_name"
                   placeholder="Nome"
                   defaultValue={guardian.full_name ?? ""}
+                />
+                <Input
+                  name="guardian_cpf"
+                  placeholder="CPF"
+                  defaultValue={guardian.cpf ?? ""}
                 />
                 <Input
                   name="guardian_phone"
