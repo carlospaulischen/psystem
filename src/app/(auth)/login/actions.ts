@@ -78,6 +78,10 @@ export async function requestPasswordReset(formData: FormData) {
         name: link.user?.user_metadata?.full_name as string | undefined,
         actionLink,
       });
+    } else {
+      console.error(
+        `[auth] reset não enviado: ${!link?.user ? "usuário inexistente" : !actionLink ? "link não gerado" : "usuário fora do psystem"}`,
+      );
     }
   }
 
