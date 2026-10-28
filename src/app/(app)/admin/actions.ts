@@ -105,5 +105,57 @@ export async function createTenant(formData: FormData) {
   });
 
   revalidatePath("/admin/organizacoes");
+}
 
+// Acesso suporte: platform admin assume a sessão de um membro do tenant
+// por no máximo 2h. Marcado em app_metadata.support_until — o proxy
+// força logout quando expira. Auditado.
+export async function startSupportAccess(formData: FormData) {
+  const { profile } = await requirePlatformAdmin();
+  const admin = createAdminClient();
+
+  const orgId = formData.get("org_id") as string;
+  const userId = formData.get("user_id") as string;
+  if (!orgId || !userId) redirect("/admin/organizacoes");
+
+  const { data: target } = await admin.auth.admin.getUserById(userId);
+  const email = target?.user?.email;
+  if (!email) redirect("/admin/organizacoes");
+
+  const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+  await admin.auth.admin.updateUserById(userId, {
+    app_metadata: { support_until: expiresAt.toISOString() },
+  });
+
+  const origin = (await headers()).get("origin") ?? "";
+  const { data: link } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+  });
+  const actionLink = link?.properties?.hashed_token
+    ? `${origin}/auth/verify?token_hash=${link.properties.hashed_token}&type=magiclink&next=/dashboard`
+    : link?.properties?.action_link;
+  if (!actionLink) {
+    return redirect("/admin/organizacoes?error=" + encodeURIComponent("Não foi possível gerar o acesso de suporte."));
+  }
+
+  const { data: org } = await admin
+    .from("organizations")
+    .select("name")
+    .eq("id", orgId)
+    .single();
+
+  void logAudit({
+    organizationId: profile.organization_id,
+    resourceType: "support_access",
+    resourceId: userId,
+    action: "SUPORTE_ACESSO",
+    metadata: {
+      org: org?.name,
+      target_email: email,
+      expires_at: expiresAt.toISOString(),
+    },
+  });
+
+  redirect(actionLink);
 }

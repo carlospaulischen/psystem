@@ -1,15 +1,16 @@
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { createTenant } from "../actions";
+import { createTenant, startSupportAccess } from "../actions";
 
 export const metadata = { title: "Organizações" };
 
 // Camada SaaS: somente platform admin cria/gerencia tenants.
+// Listagem via service role — RLS esconderia orgs de outros tenants.
 export default async function OrganizacoesPage({
   searchParams,
 }: {
@@ -19,12 +20,33 @@ export default async function OrganizacoesPage({
   if (!profile.is_platform_admin) notFound();
 
   const params = await searchParams;
-  const supabase = await createClient();
-  const { data: orgs } = await supabase
-    .from("organizations")
-    .select("id, name, slug, type, created_at")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const admin = createAdminClient();
+
+  const [{ data: orgs }, { data: members }] = await Promise.all([
+    admin
+      .from("organizations")
+      .select("id, name, slug, type, created_at")
+      .order("created_at", { ascending: false })
+      .limit(50),
+    admin
+      .from("organization_members")
+      .select("organization_id, user_id, role, status, profile:profiles(full_name)")
+      .eq("status", "active")
+      .limit(500),
+  ]);
+
+  const membersByOrg = new Map<
+    string,
+    { user_id: string; role: string; name: string }[]
+  >();
+  for (const m of members ?? []) {
+    const name =
+      (m.profile as { full_name?: string } | null)?.full_name ??
+      m.user_id.slice(0, 8);
+    const list = membersByOrg.get(m.organization_id) ?? [];
+    list.push({ user_id: m.user_id, role: m.role, name });
+    membersByOrg.set(m.organization_id, list);
+  }
 
   return (
     <div className="space-y-6">
@@ -91,22 +113,54 @@ export default async function OrganizacoesPage({
         </CardHeader>
         <CardContent>
           <ul className="divide-y divide-border text-sm">
-            {(orgs ?? []).map((o) => (
-              <li
-                key={o.id}
-                className="flex items-center justify-between py-2.5"
-              >
-                <span>
-                  {o.name}
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    {o.slug} · {o.type}
-                  </span>
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(o.created_at).toLocaleDateString("pt-BR")}
-                </span>
-              </li>
-            ))}
+            {(orgs ?? []).map((o) => {
+              const staff = membersByOrg.get(o.id) ?? [];
+              return (
+                <li key={o.id} className="py-3">
+                  <div className="flex items-center justify-between">
+                    <span>
+                      {o.name}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {o.slug} · {o.type}
+                      </span>
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(o.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                  </div>
+                  {staff.length > 0 && (
+                    <form
+                      action={startSupportAccess}
+                      className="mt-2 flex items-center gap-2"
+                    >
+                      <input type="hidden" name="org_id" value={o.id} />
+                      <select
+                        name="user_id"
+                        required
+                        defaultValue=""
+                        className="h-8 rounded-md border bg-background px-2 text-xs"
+                      >
+                        <option value="" disabled>
+                          Acessar como…
+                        </option>
+                        {staff.map((s) => (
+                          <option key={s.user_id} value={s.user_id}>
+                            {s.name} ({s.role})
+                          </option>
+                        ))}
+                      </select>
+                      <SubmitButton
+                        size="sm"
+                        variant="outline"
+                        pendingLabel="Gerando…"
+                      >
+                        Suporte (2h)
+                      </SubmitButton>
+                    </form>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </CardContent>
       </Card>

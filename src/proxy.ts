@@ -43,6 +43,28 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Acesso suporte (≤2h): app_metadata.support_until expirado →
+  // limpa a flag e força logout.
+  const supportUntil = user?.app_metadata?.support_until as
+    | string
+    | undefined;
+  if (user && supportUntil && new Date(supportUntil) < new Date()) {
+    try {
+      const { createAdminClient } = await import("@/lib/supabase/admin");
+      const admin = createAdminClient();
+      await admin.auth.admin.updateUserById(user.id, {
+        app_metadata: { support_until: null },
+      });
+    } catch {
+      // mesma falha não deve impedir o logout
+    }
+    await supabase.auth.signOut();
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   const path = request.nextUrl.pathname;
   const isPublic =
     path === "/" || PUBLIC_PATHS.some((p) => path.startsWith(p));
