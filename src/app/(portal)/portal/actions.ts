@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { sendEmail } from "@/lib/email";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const REQUEST_TYPES = [
   "declaration",
@@ -218,6 +220,38 @@ export async function acceptContract(documentId: string) {
 
   if (error && !error.message.includes("duplicate")) {
     console.error("[portal] accept:", error.message);
+  } else {
+    // Avisa o psicólogo responsável por e-mail (Resend).
+    try {
+      const { data: link } = await supabase
+        .from("patient_links")
+        .select("psychologist_id")
+        .eq("patient_id", account.patient_id)
+        .eq("status", "active")
+        .limit(1)
+        .single();
+      const { data: pat } = await supabase
+        .from("patients")
+        .select("full_name")
+        .eq("id", account.patient_id)
+        .single();
+      if (link) {
+        const admin = createAdminClient();
+        const { data: psych } = await admin.auth.admin.getUserById(
+          link.psychologist_id,
+        );
+        const to = psych?.user?.email;
+        if (to) {
+          await sendEmail({
+            to,
+            subject: "Contrato aceito — PSYSTEM",
+            html: `<div style="font-family:sans-serif;max-width:480px"><h2 style="color:#4338ca">PSYSTEM</h2><p>O paciente <strong>${pat?.full_name ?? ""}</strong> aceitou o contrato de prestação de serviços.</p><p style="color:#6b7280;font-size:13px">A prova do aceite (data, IP) fica registrada na ficha do documento.</p></div>`,
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[portal] accept notify:", e);
+    }
   }
 
   revalidatePath("/portal");
