@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   // autenticado e dinâmico (cookies/JWT por request). O modelo novo exige
   // connection()/Suspense em cada página sem ganho real para este MVP.
   // Reavaliar quando houver páginas públicas (marketing/portal).
+  experimental: {
+    agentUpgrade: "security",
+  },
   turbopack: {
     rules: {
       "*.css": {
