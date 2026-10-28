@@ -26,7 +26,7 @@ export function AppShell({
   }, [pathname]);
 
   return (
-    <div className="flex min-h-dvh flex-1">
+    <div className="flex h-dvh flex-1 overflow-hidden">
       {open && (
         <div
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
