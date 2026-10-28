@@ -77,7 +77,7 @@ export default async function AuditoriaPage() {
         <CardHeader>
           <CardTitle className="text-base">Eventos</CardTitle>
           <CardDescription>
-            Registros são append-only: não podem ser editados nem apagados.
+            Registros são permanentes: não podem ser editados nem apagados.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
