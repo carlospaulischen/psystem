@@ -1,6 +1,7 @@
 "use client";
 
-import { EllipsisVertical } from "lucide-react";
+import { useTransition } from "react";
+import { EllipsisVertical, Loader2 } from "lucide-react";
 import { cancelCharge, markChargePaid } from "./actions";
 import {
   DropdownMenu,
@@ -18,22 +19,33 @@ export function ChargeMenu({
   status: string;
 }) {
   const open = status === "pending" || status === "overdue";
+  const [pending, startTransition] = useTransition();
   if (!open) return null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" size="icon" aria-label="Ações" />}
+        render={
+          <Button variant="ghost" size="icon" aria-label="Ações" disabled={pending} />
+        }
       >
-        <EllipsisVertical className="size-4" />
+        {pending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <EllipsisVertical className="size-4" />
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => markChargePaid(chargeId)}>
+        <DropdownMenuItem
+          disabled={pending}
+          onSelect={() => startTransition(() => markChargePaid(chargeId))}
+        >
           Marcar como pago
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive"
-          onSelect={() => cancelCharge(chargeId)}
+          disabled={pending}
+          onSelect={() => startTransition(() => cancelCharge(chargeId))}
         >
           Cancelar cobrança
         </DropdownMenuItem>

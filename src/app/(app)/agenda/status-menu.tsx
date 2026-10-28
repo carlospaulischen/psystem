@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useState, useTransition } from "react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,13 +27,21 @@ export function AppointmentStatusMenu({
   startsAt: string;
 }) {
   const [rescheduling, setRescheduling] = useState(false);
+  const [pending, startTransition] = useTransition();
 
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted">
+        <DropdownMenuTrigger
+          disabled={pending}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted disabled:opacity-50"
+        >
           Ações
-          <ChevronDown className="size-3" />
+          {pending ? (
+            <Loader2 className="size-3 animate-spin" />
+          ) : (
+            <ChevronDown className="size-3" />
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={() => setRescheduling(true)}>
@@ -43,7 +51,12 @@ export function AppointmentStatusMenu({
           {ACTIONS.map((a) => (
             <DropdownMenuItem
               key={a.status}
-              onSelect={() => updateAppointmentStatus(appointmentId, a.status)}
+              disabled={pending}
+              onSelect={() =>
+                startTransition(() =>
+                  updateAppointmentStatus(appointmentId, a.status),
+                )
+              }
             >
               {a.label}
             </DropdownMenuItem>

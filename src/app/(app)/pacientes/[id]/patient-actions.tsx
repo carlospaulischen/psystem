@@ -1,6 +1,7 @@
 "use client";
 
-import { EllipsisVertical } from "lucide-react";
+import { useTransition } from "react";
+import { EllipsisVertical, Loader2 } from "lucide-react";
 import { updatePatientStatus } from "../actions";
 import {
   DropdownMenu,
@@ -33,18 +34,29 @@ export function PatientActions({
     { label: "Reativar paciente", next: "active" },
   ];
 
+  const [pending, startTransition] = useTransition();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" size="icon" aria-label="Ações" />}
+        render={
+          <Button variant="ghost" size="icon" aria-label="Ações" disabled={pending} />
+        }
       >
-        <EllipsisVertical className="size-4" />
+        {pending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <EllipsisVertical className="size-4" />
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {actions.map((a) => (
           <DropdownMenuItem
             key={a.next}
-            onSelect={() => updatePatientStatus(patientId, a.next)}
+            disabled={pending}
+            onSelect={() =>
+              startTransition(() => updatePatientStatus(patientId, a.next))
+            }
           >
             {a.label}
           </DropdownMenuItem>

@@ -60,14 +60,14 @@ export default async function FinanceiroPage({
 
   return (
     <div>
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Financeiro</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Cobranças e recebimentos
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/financeiro/notas"
             className={buttonVariants({ variant: "outline" })}

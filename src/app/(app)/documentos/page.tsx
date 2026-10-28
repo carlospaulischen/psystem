@@ -41,7 +41,7 @@ export default async function DocumentosPage() {
 
   return (
     <div>
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Documentos</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -49,7 +49,7 @@ export default async function DocumentosPage() {
           </p>
         </div>
         {isPsychologist && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/documentos/modelos"
               className={buttonVariants({ variant: "outline" })}
