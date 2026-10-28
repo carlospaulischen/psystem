@@ -19,6 +19,7 @@ export interface Profile {
   crp: string | null;
   organization?: Organization;
   is_org_admin?: boolean;
+  is_platform_admin?: boolean;
   member_status?: string | null;
 }
 

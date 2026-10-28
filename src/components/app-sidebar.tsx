@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
+  Building2,
   CalendarDays,
   FileText,
   LayoutDashboard,
@@ -12,6 +13,7 @@ import {
   Settings,
   Users,
   Wallet,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -25,7 +27,16 @@ import { Separator } from "@/components/ui/separator";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { logout } from "@/app/(auth)/login/actions";
 
-const NAV_GROUPS = [
+const NAV_GROUPS: {
+  label: string;
+  items: {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+    adminOnly?: boolean;
+    platformOnly?: boolean;
+  }[];
+}[] = [
   {
     label: "Principal",
     items: [
@@ -51,6 +62,12 @@ const NAV_GROUPS = [
         adminOnly: true,
       },
       { href: "/configuracoes", label: "Configurações", icon: Settings },
+      {
+        href: "/admin/organizacoes",
+        label: "Organizações",
+        icon: Building2,
+        platformOnly: true,
+      },
     ],
   },
 ];
@@ -75,7 +92,7 @@ export function AppSidebar({
   profile,
   orgs = [],
 }: {
-  profile: {
+  profile: { is_platform_admin?: boolean;
     full_name: string;
     role: string;
     is_org_admin?: boolean;
@@ -103,7 +120,9 @@ export function AppSidebar({
       <nav className="flex flex-1 flex-col px-3">
         {NAV_GROUPS.map((group) => {
           const items = group.items.filter(
-            (item) => !item.adminOnly || profile.is_org_admin,
+            (item) =>
+              (!item.adminOnly || profile.is_org_admin) &&
+              (!item.platformOnly || profile.is_platform_admin),
           );
           if (items.length === 0) return null;
           return (
