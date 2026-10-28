@@ -56,7 +56,7 @@
 
 ## Técnico / ops
 
-- ~~Migração para projeto Supabase dedicado~~ ✅ 2026-10-27: projeto `psystem` (`cvegxkyufhlsdysfdsxq`, sa-east-1, Free) em conta própria — schema+seed reaplicados, usuário real criado, envs da Vercel atualizadas. Pendências da migração: (a) rotacionar o access token novo (compartilhado em texto), (b) drop do schema `psystem` no projeto juntae — **só com confirmação**, snapshot em `backups/psystem-snapshot-2026-10-27.json`, (c) configurar SMTP do Resend no Auth do projeto novo (opcional — e-mails já saem via código+Resend)
+- ~~Migração para projeto Supabase dedicado~~ ✅ 2026-10-27: projeto `psystem` (`cvegxkyufhlsdysfdsxq`, sa-east-1, Free) em conta própria — schema+seed reaplicados, usuário real criado, envs da Vercel atualizadas, **schema `psystem` dropado do juntae** (snapshot em `backups/`). Setup obrigatório de projeto novo: expor schema `psystem` no PostgREST (`db_schema` via Management API). Pendências: (a) rotacionar os access tokens compartilhados em texto, (b) SMTP do Resend no Auth do projeto novo (opcional — e-mails já saem via código+Resend), (c) auth.users demo (`ana.psi@demo.com` etc.) ficaram no Auth do juntae — inertes sem profiles, avaliar remoção depois
 - Rotacionar o access token do Supabase (foi compartilhado em texto)
 - `npm audit`: 9 findings high pendentes de revisão
 - ~~Domínio próprio~~ ✅ 2026-10-17: `psystem.app.br` via Registro.br + Cloudflare (CNAME flattening, DNS-only) + `NEXT_PUBLIC_SITE_URL` na Vercel + Auth allow-list atualizada (site_url continua do juntae — não mexer). Destrava: verificação OAuth Google (P8) e domínio verificado Resend (B4)
