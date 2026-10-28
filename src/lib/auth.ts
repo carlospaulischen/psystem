@@ -14,7 +14,9 @@ export async function getSessionProfile() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("*, organization:organizations(id, type, name, slug)")
+    .select(
+      "*, organization:organizations!profiles_organization_id_fkey(id, type, name, slug)",
+    )
     .eq("id", user.id)
     .single<Profile>();
 
