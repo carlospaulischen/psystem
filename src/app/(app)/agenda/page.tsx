@@ -279,7 +279,8 @@ export default async function AgendaPage({
               {nextMonth.toLocaleDateString("pt-BR", { month: "short" })} →
             </PendingLink>
           </div>
-          <div className="grid grid-cols-7 overflow-hidden rounded-xl border bg-card">
+          <div className="overflow-x-auto rounded-xl border">
+          <div className="grid min-w-[560px] grid-cols-7 overflow-hidden bg-card">
             {WEEKDAY_HEADER.map((w) => (
               <div
                 key={w}
@@ -337,6 +338,7 @@ export default async function AgendaPage({
                 </div>
               );
             })}
+          </div>
           </div>
         </div>
       ) : view === "week" ? (
