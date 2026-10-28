@@ -15,7 +15,7 @@ import {
   SchedulingPolicyForm,
 } from "./settings-forms";
 import { createOwnPractice } from "../org-actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import {
   Card,
   CardContent,
@@ -197,12 +197,13 @@ export default async function ConfiguracoesPage() {
                           className="h-8 w-16 rounded-md border border-input bg-transparent px-2 text-right text-xs"
                         />
                         <span className="text-xs text-muted-foreground">%</span>
-                        <button
-                          type="submit"
+                        <SubmitButton
+                          variant="ghost"
+                          size="sm"
                           className="rounded-md border border-input px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
                         >
                           Repasse
-                        </button>
+                        </SubmitButton>
                       </form>
                     )}
                     <StatusBadge status={m.status} />
@@ -306,9 +307,9 @@ export default async function ConfiguracoesPage() {
             </CardHeader>
             <CardContent>
               <form action={createOwnPractice}>
-                <Button type="submit" variant="outline">
+                <SubmitButton variant="outline">
                   Criar meu consultório
-                </Button>
+                </SubmitButton>
               </form>
             </CardContent>
           </Card>

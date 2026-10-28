@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { addAvailability, removeAvailability } from "./actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -41,13 +41,13 @@ export function AvailabilityPanel({ slots }: { slots: Slot[] }) {
                 >
                   {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
                   <form action={removeAvailability.bind(null, s.id)}>
-                    <button
-                      type="submit"
+                    <SubmitButton
+                      variant="ghost"
                       aria-label="Remover"
                       className="text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="size-3.5" />
-                    </button>
+                    </SubmitButton>
                   </form>
                 </span>
               ))}
@@ -86,9 +86,9 @@ export function AvailabilityPanel({ slots }: { slots: Slot[] }) {
           <Label htmlFor="end_time">Fim</Label>
           <Input id="end_time" name="end_time" type="time" required />
         </div>
-        <Button type="submit" variant="outline">
+        <SubmitButton variant="outline">
           Adicionar
-        </Button>
+        </SubmitButton>
       </form>
     </div>
   );

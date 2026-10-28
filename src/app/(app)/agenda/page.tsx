@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { AppointmentStatusMenu } from "./status-menu";
 import { approveAppointmentRequest, rejectAppointmentRequest } from "./actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "@/types";
@@ -234,16 +234,16 @@ export default async function AgendaPage({
                 </div>
                 <div className="flex items-center gap-2">
                   <form action={approveAppointmentRequest.bind(null, r.id)}>
-                    <Button type="submit" size="sm">
+                    <SubmitButton size="sm">
                       <Check className="size-3.5" />
                       Aprovar
-                    </Button>
+                    </SubmitButton>
                   </form>
                   <form action={rejectAppointmentRequest.bind(null, r.id)}>
-                    <Button type="submit" size="sm" variant="outline">
+                    <SubmitButton size="sm" variant="outline">
                       <X className="size-3.5" />
                       Recusar
-                    </Button>
+                    </SubmitButton>
                   </form>
                 </div>
               </li>

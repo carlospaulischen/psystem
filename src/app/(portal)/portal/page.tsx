@@ -9,7 +9,7 @@ import {
   requestAppointment,
   submitAnamnesis,
 } from "./actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -144,23 +144,23 @@ export default async function PortalPage({
                       a.status,
                     ) && (
                       <form action={confirmAppointment.bind(null, a.id)}>
-                        <Button type="submit" size="sm" variant="outline">
+                        <SubmitButton size="sm" variant="outline">
                           Confirmar
-                        </Button>
+                        </SubmitButton>
                       </form>
                     )}
                     {["scheduled", "awaiting_confirmation", "confirmed"].includes(
                       a.status,
                     ) && (
                       <form action={cancelAppointment.bind(null, a.id)}>
-                        <Button
+                        <SubmitButton
                           type="submit"
                           size="sm"
                           variant="ghost"
                           className="text-destructive"
                         >
                           Cancelar
-                        </Button>
+                        </SubmitButton>
                       </form>
                     )}
                   </span>
@@ -200,9 +200,9 @@ export default async function PortalPage({
               />
             </div>
             <div className="flex justify-end">
-              <Button type="submit" size="sm">
+              <SubmitButton size="sm">
                 Pedir horário
-              </Button>
+              </SubmitButton>
             </div>
           </form>
 
@@ -314,9 +314,9 @@ export default async function PortalPage({
                 </div>
               ))}
               <div className="flex justify-end">
-                <Button type="submit" size="sm">
+                <SubmitButton size="sm">
                   Enviar respostas
-                </Button>
+                </SubmitButton>
               </div>
             </form>
           </CardContent>
@@ -361,9 +361,9 @@ export default async function PortalPage({
               />
             </div>
             <div className="flex justify-end">
-              <Button type="submit" size="sm">
+              <SubmitButton size="sm">
                 Enviar solicitação
-              </Button>
+              </SubmitButton>
             </div>
           </form>
 

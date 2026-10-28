@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { ChargeMenu } from "./charge-menu";
 import { buttonVariants } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import {
   Card,
   CardContent,
@@ -124,12 +125,7 @@ export default async function FinanceiroPage({
             className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
           />
         </div>
-        <button
-          type="submit"
-          className={buttonVariants({ variant: "outline", size: "sm" })}
-        >
-          Filtrar
-        </button>
+        <SubmitButton variant="outline" size="sm">Filtrar</SubmitButton>
       </form>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">

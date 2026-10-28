@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/submit-button";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAppointment } from "../actions";
@@ -230,7 +231,7 @@ export default async function NovoAgendamentoPage({
             )}
 
             <div className="flex justify-end">
-              <Button type="submit">Agendar</Button>
+              <SubmitButton >Agendar</SubmitButton>
             </div>
           </form>
         </CardContent>

@@ -12,7 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { buttonVariants, Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { ClinicalRecordPanel } from "./clinical-record-panel";
 import { PatientActions } from "./patient-actions";
 import { invitePatientPortal, uploadAttachment, deleteAttachment, sendAnamnesis } from "../actions";
@@ -134,9 +135,9 @@ export default async function PacienteDetailPage({
           ) : (
             patient.email && (
               <form action={invitePatientPortal.bind(null, patient.id)}>
-                <Button type="submit" variant="outline" size="sm">
+                <SubmitButton variant="outline" size="sm">
                   Convidar para o portal
-                </Button>
+                </SubmitButton>
               </form>
             )
           )}
@@ -308,10 +309,10 @@ export default async function PacienteDetailPage({
                   required
                   className="text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground"
                 />
-                <Button type="submit" size="sm" variant="outline">
+                <SubmitButton size="sm" variant="outline">
                   <Upload className="size-4" />
                   Enviar
-                </Button>
+                </SubmitButton>
               </form>
 
               {attachmentsWithUrl.length > 0 ? (
@@ -348,14 +349,14 @@ export default async function PacienteDetailPage({
                       <form
                         action={deleteAttachment.bind(null, att.id, patient.id)}
                       >
-                        <Button
+                        <SubmitButton
                           type="submit"
                           size="sm"
                           variant="ghost"
                           className="text-muted-foreground hover:text-destructive"
                         >
                           <Trash2 className="size-4" />
-                        </Button>
+                        </SubmitButton>
                       </form>
                     </li>
                   ))}
@@ -383,9 +384,9 @@ export default async function PacienteDetailPage({
                 <div>
                   {portalAccount ? (
                     <form action={sendAnamnesis.bind(null, patient.id)}>
-                      <Button type="submit" variant="outline" size="sm">
+                      <SubmitButton variant="outline" size="sm">
                         Enviar anamnese ao paciente
-                      </Button>
+                      </SubmitButton>
                     </form>
                   ) : (
                     <p className="text-xs text-muted-foreground">

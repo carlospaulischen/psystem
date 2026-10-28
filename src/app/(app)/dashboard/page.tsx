@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { decideAccessRequest } from "./actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { RevenueChart, WeekChart } from "./dashboard-charts";
 import type { Appointment, Charge } from "@/types";
 
@@ -378,16 +378,16 @@ export default async function DashboardPage() {
                         "fulfilled",
                       )}
                     >
-                      <Button type="submit" size="sm">
+                      <SubmitButton size="sm">
                         Atender
-                      </Button>
+                      </SubmitButton>
                     </form>
                     <form
                       action={decideAccessRequest.bind(null, r.id, "denied")}
                     >
-                      <Button type="submit" variant="outline" size="sm">
+                      <SubmitButton variant="outline" size="sm">
                         Negar
-                      </Button>
+                      </SubmitButton>
                     </form>
                   </div>
                 </li>

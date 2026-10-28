@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/submit-button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
@@ -124,7 +125,7 @@ export default async function ModelosPage({
                 <p className="text-sm text-emerald-600">Modelo salvo.</p>
               )}
               <div className="flex justify-end">
-                <Button type="submit">Salvar modelo</Button>
+                <SubmitButton >Salvar modelo</SubmitButton>
               </div>
             </form>
           ) : (

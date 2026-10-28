@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { login } from "./actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -85,9 +85,9 @@ export default async function LoginPage({
               </p>
             )}
 
-            <Button type="submit" className="mt-1 w-full">
+            <SubmitButton className="mt-1 w-full">
               Entrar
-            </Button>
+            </SubmitButton>
           </form>
         </CardContent>
       </Card>

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { buttonVariants } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import {
   Table,
   TableBody,
@@ -148,12 +148,7 @@ export default async function RepassesPage({
             className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
           />
         </div>
-        <button
-          type="submit"
-          className={buttonVariants({ variant: "outline", size: "sm" })}
-        >
-          Filtrar
-        </button>
+        <SubmitButton variant="outline" size="sm">Filtrar</SubmitButton>
       </form>
 
       <div className="mt-6 rounded-xl border bg-card">

@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/submit-button";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -173,7 +174,7 @@ export default async function NovoDocumentoPage({
             )}
 
             <div className="flex justify-end">
-              <Button type="submit">Salvar rascunho</Button>
+              <SubmitButton >Salvar rascunho</SubmitButton>
             </div>
           </form>
         </CardContent>

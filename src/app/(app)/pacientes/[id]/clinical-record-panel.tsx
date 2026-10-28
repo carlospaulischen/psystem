@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { addRecordEntry } from "../actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -80,7 +80,7 @@ export async function ClinicalRecordPanel({
               <Textarea id="procedures" name="procedures" rows={2} />
             </div>
             <div className="flex justify-end">
-              <Button type="submit">Salvar registro</Button>
+              <SubmitButton>Salvar registro</SubmitButton>
             </div>
           </form>
         </CardContent>
@@ -109,9 +109,9 @@ export async function ClinicalRecordPanel({
               <p className="text-xs text-muted-foreground">
                 Exportações ficam registradas na trilha de auditoria.
               </p>
-              <Button type="submit" size="sm" className="w-full">
+              <SubmitButton size="sm" className="w-full">
                 Baixar PDF
-              </Button>
+              </SubmitButton>
             </form>
           </details>
         </CardHeader>

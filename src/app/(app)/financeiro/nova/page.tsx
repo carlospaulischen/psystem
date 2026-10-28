@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/submit-button";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createCharge } from "../actions";
@@ -92,7 +93,7 @@ export default async function NovaCobrancaPage({
             )}
 
             <div className="flex justify-end">
-              <Button type="submit">Criar cobrança</Button>
+              <SubmitButton >Criar cobrança</SubmitButton>
             </div>
           </form>
         </CardContent>

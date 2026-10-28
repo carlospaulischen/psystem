@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -63,9 +63,9 @@ export function MfaForm({ next }: { next: string }) {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Button type="submit" disabled={pending || code.length !== 6}>
+      <SubmitButton disabled={pending || code.length !== 6}>
         {pending ? "Verificando…" : "Verificar"}
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

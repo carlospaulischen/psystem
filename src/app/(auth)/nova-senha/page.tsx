@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { setNewPassword } from "../login/actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -66,9 +66,9 @@ export default async function NovaSenhaPage({
               </p>
             )}
 
-            <Button type="submit" className="w-full">
+            <SubmitButton className="w-full">
               Salvar senha
-            </Button>
+            </SubmitButton>
           </form>
         </CardContent>
       </Card>

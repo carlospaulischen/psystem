@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/submit-button";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
@@ -187,9 +188,9 @@ export default async function NotasPage({
                         desta nota fiscal ao paciente.
                       </label>
                       <div className="flex justify-end">
-                        <Button type="submit" size="sm">
+                        <SubmitButton  size="sm">
                           Aprovar e autorizar envio
-                        </Button>
+                        </SubmitButton>
                       </div>
                     </form>
                   ) : (

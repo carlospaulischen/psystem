@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { updatePatient } from "../../actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -170,7 +170,7 @@ export default async function EditarPacientePage({
             )}
 
             <div className="flex justify-end gap-2">
-              <Button type="submit">Salvar alterações</Button>
+              <SubmitButton type="submit">Salvar alterações</SubmitButton>
             </div>
           </form>
         </CardContent>

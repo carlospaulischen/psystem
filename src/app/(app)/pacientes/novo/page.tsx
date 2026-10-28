@@ -1,7 +1,7 @@
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createPatient } from "../actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -113,7 +113,7 @@ export default async function NovoPacientePage({
             )}
 
             <div className="flex justify-end gap-2">
-              <Button type="submit">Cadastrar paciente</Button>
+              <SubmitButton>Cadastrar paciente</SubmitButton>
             </div>
           </form>
         </CardContent>

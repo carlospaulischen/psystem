@@ -12,7 +12,8 @@ import {
   issueDocument,
   setDocumentReview,
 } from "../actions";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -195,9 +196,9 @@ export default async function DocumentoPage({
                     defaultValue={latest.content}
                   />
                   <div className="flex justify-end">
-                    <Button type="submit" variant="outline" size="sm">
+                    <SubmitButton variant="outline" size="sm">
                       Salvar como v{doc.current_version + 1}
-                    </Button>
+                    </SubmitButton>
                   </div>
                 </form>
               </details>
@@ -210,16 +211,16 @@ export default async function DocumentoPage({
                     doc.status === "draft",
                   )}
                 >
-                  <Button type="submit" variant="outline" size="sm">
+                  <SubmitButton variant="outline" size="sm">
                     {doc.status === "draft"
                       ? "Marcar em revisão"
                       : "Voltar a rascunho"}
-                  </Button>
+                  </SubmitButton>
                 </form>
                 <form
                   action={issueDocument.bind(null, doc.id, latest.content)}
                 >
-                  <Button type="submit">Emitir documento</Button>
+                  <SubmitButton>Emitir documento</SubmitButton>
                 </form>
               </div>
             </CardContent>
@@ -257,16 +258,16 @@ export default async function DocumentoPage({
                     placeholder="ex.: portal, e-mail, impresso"
                   />
                 </div>
-                <Button type="submit">Registrar entrega</Button>
+                <SubmitButton>Registrar entrega</SubmitButton>
               </form>
 
               <form
                 action={invalidateDocument.bind(null, doc.id)}
                 className="border-t pt-4"
               >
-                <Button type="submit" variant="outline" size="sm">
+                <SubmitButton variant="outline" size="sm">
                   Invalidar documento
-                </Button>
+                </SubmitButton>
               </form>
             </CardContent>
           </Card>

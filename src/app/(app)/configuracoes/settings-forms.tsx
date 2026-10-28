@@ -8,7 +8,7 @@ import {
   updateSchedulingPolicy,
   type InviteState,
 } from "./actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -84,9 +84,9 @@ export function OrganizationForm({
       )}
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={pending}>
+        <SubmitButton disabled={pending}>
           {pending ? "Salvando…" : "Salvar organização"}
-        </Button>
+        </SubmitButton>
       </div>
     </form>
   );
@@ -133,9 +133,9 @@ export function ProfileForm({
       )}
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={pending}>
+        <SubmitButton disabled={pending}>
           {pending ? "Salvando…" : "Salvar perfil"}
-        </Button>
+        </SubmitButton>
       </div>
     </form>
   );
@@ -203,9 +203,9 @@ export function SchedulingPolicyForm({
       )}
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={pending}>
+        <SubmitButton disabled={pending}>
           {pending ? "Salvando…" : "Salvar política"}
-        </Button>
+        </SubmitButton>
       </div>
     </form>
   );
@@ -282,9 +282,9 @@ export function BillingPolicyForm({
       )}
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={pending}>
+        <SubmitButton disabled={pending}>
           {pending ? "Salvando…" : "Salvar política"}
-        </Button>
+        </SubmitButton>
       </div>
     </form>
   );
