@@ -102,7 +102,8 @@ export default async function RecibosPage({
       </form>
 
       <div className="mt-6 rounded-xl border bg-card">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Paciente</TableHead>
@@ -145,6 +146,7 @@ export default async function RecibosPage({
             )}
           </TableBody>
         </Table>
+          </div>
       </div>
     </div>
   );

@@ -104,7 +104,7 @@ export function AppSidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
+    <aside className="flex h-dvh w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
       <div className="px-5 py-5">
         <Image
           src="/brand/psystem/logo-horizontal-dark.png"

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 // Ordem importa: prefixos mais específicos primeiro.
@@ -19,7 +19,7 @@ const TITLES: [string, string][] = [
   ["/dashboard", "Início"],
 ];
 
-export function AppTopbar() {
+export function AppTopbar({ onMenu }: { onMenu?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -27,7 +27,17 @@ export function AppTopbar() {
     TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "PSYSTEM";
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-border/60 bg-background/80 px-6 backdrop-blur">
+    <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur sm:px-6">
+      {onMenu && (
+        <button
+          type="button"
+          onClick={onMenu}
+          className="rounded-md p-2 hover:bg-muted lg:hidden"
+          aria-label="Abrir menu"
+        >
+          <Menu className="size-5" />
+        </button>
+      )}
       <p className="text-sm text-muted-foreground">
         PSYSTEM
         <span className="mx-2 text-border">/</span>
@@ -47,7 +57,7 @@ export function AppTopbar() {
             name="q"
             type="search"
             placeholder="Buscar paciente…"
-            className="h-9 w-56 pl-9 md:w-64"
+            className="h-9 w-36 pl-9 sm:w-56 md:w-64"
           />
         </div>
       </form>

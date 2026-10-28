@@ -152,7 +152,8 @@ export default async function RepassesPage({
       </form>
 
       <div className="mt-6 rounded-xl border bg-card">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Profissional</TableHead>
@@ -212,6 +213,7 @@ export default async function RepassesPage({
             )}
           </TableBody>
         </Table>
+          </div>
       </div>
     </div>
   );

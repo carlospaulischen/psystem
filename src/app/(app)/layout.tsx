@@ -1,7 +1,6 @@
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { AppSidebar } from "@/components/app-sidebar";
-import { AppTopbar } from "@/components/app-topbar";
+import { AppShell } from "@/components/app-shell";
 
 export default async function AppLayout({
   children,
@@ -25,13 +24,5 @@ export default async function AppLayout({
     .map((m) => m.organization)
     .filter((o): o is NonNullable<typeof o> => o !== null);
 
-  return (
-    <div className="flex min-h-dvh flex-1">
-      <AppSidebar profile={profile} orgs={orgs} />
-      <main className="min-w-0 flex-1 overflow-y-auto bg-muted/40">
-        <AppTopbar />
-        <div className="mx-auto max-w-6xl p-6 lg:p-8">{children}</div>
-      </main>
-    </div>
-  );
+  return <AppShell profile={profile} orgs={orgs}>{children}</AppShell>;
 }

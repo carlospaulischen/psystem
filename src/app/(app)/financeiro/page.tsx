@@ -146,7 +146,8 @@ export default async function FinanceiroPage({
       </div>
 
       <div className="mt-6 rounded-xl border bg-card">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Paciente</TableHead>
@@ -191,6 +192,7 @@ export default async function FinanceiroPage({
             )}
           </TableBody>
         </Table>
+          </div>
       </div>
     </div>
   );
