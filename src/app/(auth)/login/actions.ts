@@ -5,11 +5,27 @@ import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendAuthEmail } from "@/lib/messages";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+async function clientIp() {
+  return (
+    (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown"
+  );
+}
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const next = (formData.get("next") as string) || "/dashboard";
+
+  // Brute force: 10 tentativas / 15min por IP+email.
+  const ip = await clientIp();
+  if (!checkRateLimit(`login:${ip}:${email}`, 10, 15 * 60_000)) {
+    redirect(
+      `/login?error=rate_limit&next=${encodeURIComponent(next)}`,
+    );
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -41,6 +57,14 @@ export async function logout() {
 // do Auth é do projeto inteiro, compartilhado com outro app.
 export async function requestPasswordReset(formData: FormData) {
   const email = (formData.get("email") as string)?.trim().toLowerCase();
+
+  // 5 pedidos / 15min por IP+email — estourado, responde igual (não vaza
+  // nem limite nem existência da conta).
+  const ip = await clientIp();
+  if (!checkRateLimit(`reset:${ip}:${email}`, 5, 15 * 60_000)) {
+    redirect("/recuperar?sent=1");
+  }
+
   const origin =
     (await headers()).get("origin") ??
     process.env.NEXT_PUBLIC_SITE_URL ??
@@ -96,6 +120,11 @@ export async function requestPasswordReset(formData: FormData) {
 export async function setNewPassword(formData: FormData) {
   const password = formData.get("password") as string;
   const confirm = formData.get("confirm") as string;
+
+  const ip = await clientIp();
+  if (!checkRateLimit(`newpw:${ip}`, 10, 15 * 60_000)) {
+    redirect("/nova-senha?error=invalid");
+  }
   if (password.length < 8 || password !== confirm) {
     redirect("/nova-senha?error=invalid");
   }

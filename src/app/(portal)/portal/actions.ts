@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { sendEmail } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const REQUEST_TYPES = [
   "declaration",
@@ -23,6 +24,7 @@ export async function createAccessRequest(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/portal");
+  if (!checkRateLimit(`access:${user.id}`, 10, 60 * 60_000)) return;
 
   const { data: account } = await supabase
     .from("patient_accounts")
@@ -62,6 +64,7 @@ export async function requestAppointment(formData: FormData) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (user && !checkRateLimit(`apt:${user.id}`, 20, 60 * 60_000)) return;
   if (!user) redirect("/login?next=/portal");
 
   const date = formData.get("date") as string;

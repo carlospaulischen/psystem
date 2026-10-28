@@ -81,7 +81,9 @@ export default async function LoginPage({
             )}
             {params.error && (
               <p className="text-sm text-destructive">
-                Não foi possível autenticar. Verifique suas credenciais.
+                {params.error === "rate_limit"
+                  ? "Muitas tentativas. Aguarde alguns minutos e tente de novo."
+                  : "Não foi possível autenticar. Verifique suas credenciais."}
               </p>
             )}
 
