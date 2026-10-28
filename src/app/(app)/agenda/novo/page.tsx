@@ -215,6 +215,7 @@ export default async function NovoAgendamentoPage({
                 <option value="4">Repetir por 4 semanas</option>
                 <option value="8">Repetir por 8 semanas</option>
                 <option value="12">Repetir por 12 semanas</option>
+                <option value="52">Sem data de término (1 ano)</option>
               </select>
               <p className="text-xs text-muted-foreground">
                 Mesmo dia e horário a cada semana. Conflitos são pulados e
