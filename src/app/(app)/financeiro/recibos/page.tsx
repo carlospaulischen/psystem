@@ -43,7 +43,7 @@ export default async function RecibosPage({
   const { data: payments } = await supabase
     .from("payments")
     .select(
-      "amount_cents, charge:charges(patient_id, patient:patients(full_name))",
+      "amount_cents, charge:charges(patient_id, patient:patients(full_name, guardian))",
     )
     .gte("paid_at", `${year}-01-01T00:00:00Z`)
     .lt("paid_at", `${year + 1}-01-01T00:00:00Z`)
@@ -60,7 +60,10 @@ export default async function RecibosPage({
       ? charge.patient[0]
       : charge.patient;
     const cur = byPatient.get(charge.patient_id) ?? {
-      name: patient?.full_name ?? "—",
+      name:
+        (patient?.guardian as { full_name?: string } | null)?.full_name ??
+        patient?.full_name ??
+        "—",
       total: 0,
       count: 0,
     };

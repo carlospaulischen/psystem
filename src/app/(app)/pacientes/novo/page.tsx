@@ -57,6 +57,27 @@ export default async function NovoPacientePage({
                 <Label htmlFor="cpf">CPF</Label>
                 <Input id="cpf" name="cpf" placeholder="000.000.000-00" />
               </div>
+              <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="guardian_name">
+                  Responsável (opcional)
+                </Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Input
+                    id="guardian_name"
+                    name="guardian_name"
+                    placeholder="Nome — ex.: mãe do paciente"
+                  />
+                  <Input
+                    id="guardian_cpf"
+                    name="guardian_cpf"
+                    placeholder="CPF do responsável"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Para menores/tutelados: é o responsável que sai na nota e
+                  no recibo, não o paciente.
+                </p>
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="birth_date">Data de nascimento</Label>
                 <Input id="birth_date" name="birth_date" type="date" />

@@ -59,6 +59,8 @@ export interface Patient {
   id: string;
   full_name: string;
   cpf: string | null;
+
+  guardian?: { full_name?: string; cpf?: string; phone?: string; kinship?: string } | null;
   birth_date: string | null;
   phone: string | null;
   email: string | null;

@@ -31,7 +31,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     await Promise.all([
       supabase
         .from("patients")
-        .select("full_name")
+        .select("full_name, guardian")
         .eq("id", patientId)
         .single(),
       supabase
@@ -81,7 +81,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         body:
           `Declaramos, para os devidos fins de declaração de imposto de renda, ` +
           `que ${org.name}${org.document ? `, inscrita sob o CNPJ/CPF ${org.document},` : ""} ` +
-          `recebeu de ${patient.full_name} a quantia total de ${formatBRL(total)} ` +
+          `recebeu de ${(patient.guardian as { full_name?: string; cpf?: string } | null)?.full_name ?? patient.full_name}${(patient.guardian as { cpf?: string } | null)?.cpf ? ` (CPF ${(patient.guardian as { cpf?: string }).cpf})` : ""} a quantia total de ${formatBRL(total)} ` +
           `referente a serviços de psicologia prestados durante o ano-calendário de ${year}` +
           (psychologist
             ? `, sob responsabilidade profissional de ${psychologist.full_name}${psychologist.crp ? ` (${psychologist.crp})` : ""}`

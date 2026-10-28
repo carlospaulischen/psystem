@@ -27,6 +27,12 @@ export async function createPatient(formData: FormData) {
       birth_date: (formData.get("birth_date") as string) || null,
       phone: (formData.get("phone") as string) || null,
       email: (formData.get("email") as string) || null,
+      guardian: (formData.get("guardian_name") as string)?.trim()
+        ? {
+            full_name: (formData.get("guardian_name") as string).trim(),
+            cpf: (formData.get("guardian_cpf") as string)?.trim() || null,
+          }
+        : null,
       admin_notes: (formData.get("admin_notes") as string) || null,
       created_by: profile.id,
     })
@@ -439,6 +445,7 @@ export async function updatePatient(patientId: string, formData: FormData) {
     guardianName != null && guardianName !== ""
       ? {
           full_name: guardianName,
+          cpf: (formData.get("guardian_cpf") as string)?.trim() || null,
           phone: (formData.get("guardian_phone") as string) || null,
           kinship: (formData.get("guardian_kinship") as string) || null,
         }
