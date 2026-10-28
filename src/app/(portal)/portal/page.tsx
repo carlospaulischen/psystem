@@ -102,7 +102,7 @@ export default async function PortalPage({
             Meu portal
           </h1>
         </div>
-        <PortalUserMenu name={patientName} />
+        <PortalUserMenu name={patientName ?? user.email} />
       </div>
 
       {(params.notice === "cancel_window" ||
